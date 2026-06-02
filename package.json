@@ -74,6 +74,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "test": "node --experimental-strip-types --import ./test/register-ts.mjs test/parser.test.ts && node --experimental-strip-types --import ./test/register-ts.mjs test/prompt.test.ts",
     "package": "vsce package"
   },
   "devDependencies": {
