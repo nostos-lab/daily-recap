@@ -74,7 +74,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "test": "node --experimental-strip-types --import ./test/register-ts.mjs test/parser.test.ts && node --experimental-strip-types --import ./test/register-ts.mjs test/prompt.test.ts && node --experimental-strip-types --import ./test/register-ts.mjs test/llm.test.ts",
+    "test": "for f in parser prompt llm sink e2e; do node --experimental-strip-types --import ./test/register-ts.mjs test/$f.test.ts || exit 1; done",
     "package": "vsce package"
   },
   "devDependencies": {

@@ -20,7 +20,7 @@ VSCode에서 이 폴더를 열고 `F5`를 누르면 확장 개발 호스트가 �
 - [x] Phase 2 — 세션 로그 수집기 (`src/readers/`)
 - [x] Phase 3 — recap 프롬프트 템플릿 (`src/prompts/`, 2단 호출 설계)
 - [x] Phase 4 — LLM 어댑터 + 스트리밍 (`src/llm/`, fetch 직접, Anthropic 구현)
-- [ ] Phase 5 — 미리보기 + 기록(sink)
+- [x] Phase 5 — 미리보기 + 기록(sink) (`src/sinks/`, `src/preview/`, generate 전체 플로우)
 - [ ] Phase 6 — git 폴백 + 도그푸딩 + 튜닝
 - [ ] Phase 7 — 패키징(`.vsix`)
 
