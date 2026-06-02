@@ -1,4 +1,5 @@
 import type { RawMaterial } from "../types";
+import type { ContentBlock } from "../llm/types";
 import { maskSensitive } from "./masking";
 
 /**
@@ -150,7 +151,7 @@ function extractionSchemaHint(lang: Lang): string {
 }`;
 }
 
-export function buildExtractionPrompt(rm: RawMaterial, lang: Lang): PromptPair {
+export function buildExtractionPrompt(rm: RawMaterial, lang: Lang, blocks?: SourceBlock[]): PromptPair {
   const intro =
     lang === "ko"
       ? `다음은 ${factsLine(rm)} 의 세션 원재료다. 위 규칙대로 JSON을 추출하라.`
@@ -163,8 +164,35 @@ ${schemaLabel}
 ${extractionSchemaHint(lang)}
 
 ${srcLabel}
-${renderSources(buildSourceBlocks(rm))}`;
+${renderSources(blocks ?? buildSourceBlocks(rm))}`;
   return { system: EXTRACTION_SYSTEM[lang], user };
+}
+
+/**
+ * Citations API 경로용: 소스를 인라인 텍스트가 아니라 document 블록으로 보낼 때의
+ * 지시문(system + user). 실제 문서 블록은 buildCitationDocuments로 만들어 메시지에 첨부한다.
+ */
+export function buildExtractionInstruction(rm: RawMaterial, lang: Lang): PromptPair {
+  const intro =
+    lang === "ko"
+      ? `대상: ${factsLine(rm)}. 첨부된 문서들(각 제목에 출처 태그 P/A/T/R 포함)만 근거로 위 규칙대로 JSON을 추출하라.`
+      : `Target: ${factsLine(rm)}. Using only the attached documents (titles carry source tags P/A/T/R), extract JSON per the rules.`;
+  const schemaLabel = lang === "ko" ? "출력 JSON 스키마:" : "Output JSON schema:";
+  const user = `${intro}
+
+${schemaLabel}
+${extractionSchemaHint(lang)}`;
+  return { system: EXTRACTION_SYSTEM[lang], user };
+}
+
+/** SourceBlock → Citations 가능한 document 콘텐츠 블록 (PRD §6.3) */
+export function buildCitationDocuments(blocks: SourceBlock[]): ContentBlock[] {
+  return blocks.map((b) => ({
+    type: "document",
+    source: { type: "text", media_type: "text/plain", data: b.content.length > 0 ? b.content : "(빈 내용)" },
+    title: `${b.tag} · ${b.label}`,
+    citations: { enabled: true },
+  }));
 }
 
 /* ──────────────────────────────────────────────────────────────────────── */
@@ -232,7 +260,12 @@ Rules:
 Output only the filled markdown recap. Do not wrap it in a code fence.`,
 };
 
-export function buildRecapPrompt(rm: RawMaterial, extractionResult: string, lang: Lang): PromptPair {
+export function buildRecapPrompt(
+  rm: RawMaterial,
+  extractionResult: string,
+  lang: Lang,
+  blocks?: SourceBlock[]
+): PromptPair {
   const intro =
     lang === "ko"
       ? `대상: ${factsLine(rm)}. 아래 추출 결과와 원재료만 근거로, 골격을 채운 recap을 ${lang === "ko" ? "한국어" : ""}로 작성하라.`
@@ -249,6 +282,6 @@ ${exLabel}
 ${extractionResult || "(추출 결과 없음 — 원재료에서 직접 작성하되 규칙 준수)"}
 
 ${srcLabel}
-${renderSources(buildSourceBlocks(rm))}`;
+${renderSources(blocks ?? buildSourceBlocks(rm))}`;
   return { system: RECAP_SYSTEM[lang], user };
 }

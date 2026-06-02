@@ -36,7 +36,7 @@
         },
         "recap.model": {
           "type": "string",
-          "default": "claude-sonnet-4-5",
+          "default": "claude-sonnet-4-6",
           "description": "사용할 Anthropic 모델명. 최신 모델명은 https://docs.claude.com 에서 확인."
         },
         "recap.source": {
@@ -74,7 +74,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "test": "node --experimental-strip-types --import ./test/register-ts.mjs test/parser.test.ts && node --experimental-strip-types --import ./test/register-ts.mjs test/prompt.test.ts",
+    "test": "node --experimental-strip-types --import ./test/register-ts.mjs test/parser.test.ts && node --experimental-strip-types --import ./test/register-ts.mjs test/prompt.test.ts && node --experimental-strip-types --import ./test/register-ts.mjs test/llm.test.ts",
     "package": "vsce package"
   },
   "devDependencies": {
