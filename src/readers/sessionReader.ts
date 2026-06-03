@@ -247,6 +247,40 @@ export function assessFormat(stats: ParseStats, opts?: ParseOptions): FormatHeal
   return { ok: reasons.length === 0, jsonFailureRatio, unknownTypeRatio, reasons };
 }
 
+/** 세션 로그에 실제 본문이 존재하는 날짜 목록(로컬 날짜, 내림차순). */
+export function listAvailableSessionDates(files: string[]): string[] {
+  const dates = new Set<string>();
+  for (const f of files) {
+    let text = "";
+    try {
+      text = fs.readFileSync(f, "utf8");
+    } catch {
+      continue;
+    }
+    for (const line of text.split(/\r?\n/)) {
+      const t = line.trim();
+      if (t.length === 0) {
+        continue;
+      }
+      let obj: any;
+      try {
+        obj = JSON.parse(t);
+      } catch {
+        continue;
+      }
+      const type = typeof obj?.type === "string" ? obj.type : "";
+      if (!BODY_TYPES.has(type)) {
+        continue;
+      }
+      const d = localDate(obj.timestamp);
+      if (d) {
+        dates.add(d);
+      }
+    }
+  }
+  return [...dates].sort().reverse();
+}
+
 /** 여러 .jsonl 파일을 읽어 합쳐서 파싱 */
 export function readSessionFiles(files: string[], opts: ParseOptions): RawMaterial {
   const allLines: string[] = [];

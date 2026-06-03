@@ -74,10 +74,12 @@ function summarizeToolInput(name: string, input: Record<string, unknown>): strin
  */
 export function buildSourceBlocks(rm: RawMaterial): SourceBlock[] {
   const blocks: SourceBlock[] = [];
+  const isGit = rm.source === "git";
+  const promptLabel = isGit ? "커밋 메시지" : "사용자 프롬프트";
   rm.userPrompts.forEach((m, i) =>
     blocks.push({
       tag: `P${i + 1}`,
-      label: `사용자 프롬프트 @${hhmmss(m.timestamp)}`,
+      label: `${promptLabel} @${hhmmss(m.timestamp)}`,
       content: maskSensitive(clip(m.text)),
     })
   );
@@ -91,7 +93,7 @@ export function buildSourceBlocks(rm: RawMaterial): SourceBlock[] {
   rm.toolSequence.forEach((t, i) =>
     blocks.push({
       tag: `T${i + 1}`,
-      label: `도구 호출 ${t.name} @${hhmmss(t.timestamp)}`,
+      label: isGit ? `변경 파일 @${hhmmss(t.timestamp)}` : `도구 호출 ${t.name} @${hhmmss(t.timestamp)}`,
       content: maskSensitive(summarizeToolInput(t.name, t.input)),
     })
   );
@@ -111,6 +113,9 @@ export function renderSources(blocks: SourceBlock[]): string {
 
 function factsLine(rm: RawMaterial): string {
   const files = rm.changedFiles.length;
+  if (rm.source === "git") {
+    return `날짜=${rm.date} · 프로젝트=${rm.project} · 커밋=${rm.commitCount ?? rm.turnCount}개 · 변경 파일=${files}개 (출처: git 커밋)`;
+  }
   return `날짜=${rm.date} · 프로젝트=${rm.project} · 사용자 턴=${rm.turnCount} · 세션=${rm.sessionCount} · 변경/참조 파일=${files}개`;
 }
 

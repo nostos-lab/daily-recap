@@ -39,7 +39,7 @@ export interface ParseStats {
 }
 
 export interface RawMaterial {
-  source: "session";
+  source: "session" | "git";
   /** ~/.claude/projects 하위 폴더명(slug) 또는 표시용 프로젝트 경로 */
   project: string;
   /** YYYY-MM-DD (로컬 날짜 필터 기준) */
@@ -50,9 +50,11 @@ export interface RawMaterial {
   toolResults: RawToolResult[];
   /** Read/Edit/Write의 file_path + Bash 명령에서 추출한 파일 경로(중복 제거) */
   changedFiles: string[];
-  /** 등장한 distinct sessionId 수 */
+  /** 등장한 distinct sessionId 수 (session 소스) */
   sessionCount: number;
-  /** 사용자 턴 수(= userPrompts.length) */
+  /** 커밋 수 (git 소스) */
+  commitCount?: number;
+  /** 사용자 턴 수(= userPrompts.length) 또는 커밋 수 */
   turnCount: number;
   stats: ParseStats;
   warnings: string[];
