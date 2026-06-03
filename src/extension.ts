@@ -230,12 +230,12 @@ async function pickDate(): Promise<string | undefined> {
 async function pickSink(): Promise<SinkKind | undefined> {
   const picked = await vscode.window.showQuickPick(
     [
-      { label: "로컬 마크다운", description: "<outputDir>/YYYY/MM/DD-recap.md", kind: "local" as SinkKind },
-      { label: "Obsidian vault", description: "<vault>/_Recap/YYYY/MM/DD.md", kind: "obsidian" as SinkKind },
+      { label: "로컬 마크다운", description: "<outputDir>/YYYY/MM/DD-recap.md", sinkKind: "local" as SinkKind },
+      { label: "Obsidian vault", description: "<vault>/_Recap/YYYY/MM/DD.md", sinkKind: "obsidian" as SinkKind },
     ],
     { placeHolder: "recap을 어디에 기록할까요?" }
   );
-  return picked?.kind;
+  return picked?.sinkKind;
 }
 
 async function buildSink(kind: SinkKind, cfg: vscode.WorkspaceConfiguration) {
