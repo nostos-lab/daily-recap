@@ -16,6 +16,24 @@ export function mergeGitResult(session: RawMaterial, git: RawMaterial): RawMater
   };
 }
 
+export type GitEnrichMode = "off" | "auto" | "always";
+
+/** session 자체의 "결과" 신호가 빈약한가(변경 파일·도구 결과가 모두 없음) */
+export function sessionResultWeak(session: RawMaterial): boolean {
+  return session.changedFiles.length === 0 && session.toolResults.length === 0;
+}
+
+/** git 결과로 "결과" 축을 보강할지 결정. always=커밋 있으면 항상, auto=세션 결과 빈약할 때만, off=안 함 */
+export function shouldEnrich(mode: GitEnrichMode, session: RawMaterial, gitCommitCount: number): boolean {
+  if (mode === "off" || gitCommitCount <= 0) {
+    return false;
+  }
+  if (mode === "always") {
+    return true;
+  }
+  return sessionResultWeak(session); // auto
+}
+
 /**
  * git commit fallback reader.
  * when session log is missing (or user chooses git source), use that day's commits and changed files as raw material.

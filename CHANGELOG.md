@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 ### Added
-- 세션+git 융합: session 소스로 생성 시 같은 날짜의 git 커밋·변경 파일을 "결과" 축 근거(G 태그)로 보강. 설정 `recap.enrichWithGit`(기본 true).
+- 세션+git 융합: session 소스로 생성 시 같은 날짜의 git 커밋·변경 파일을 "결과" 축 근거(G 태그)로 보강. 설정 `recap.gitEnrich`: `always`(기본, 커밋 있으면 항상) / `auto`(세션 결과 신호 빈약할 때만) / `off`.
 
 ## [0.0.2] - 2026-06-04
 

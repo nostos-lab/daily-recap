@@ -82,10 +82,16 @@
           "default": "auto",
           "description": "recap 출력 언어. auto는 IDE 로케일을 따름."
         },
-        "recap.enrichWithGit": {
-          "type": "boolean",
-          "default": true,
-          "description": "session 소스로 생성할 때 같은 날짜의 git 커밋·변경 파일을 '결과' 축 근거로 보강."
+        "recap.gitEnrich": {
+          "type": "string",
+          "enum": ["always", "auto", "off"],
+          "default": "always",
+          "enumDescriptions": [
+            "커밋이 있으면 항상 보강",
+            "세션 자체의 결과 신호(변경 파일·도구 결과)가 빈약할 때만 보강",
+            "보강하지 않음"
+          ],
+          "description": "session recap의 '결과' 축을 같은 날짜 git 커밋·변경 파일로 보강하는 방식."
         }
       }
     }

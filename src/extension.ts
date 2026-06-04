@@ -5,7 +5,7 @@ import { SecretsStore } from "./secrets";
 import type { RawMaterial } from "./types";
 import { getClaudeProjectsDir, listProjects, matchProject, listSessionFiles, type ProjectEntry } from "./readers/projectPaths";
 import { readSessionFiles, listAvailableSessionDates } from "./readers/sessionReader";
-import { readGitCommits, makeGitRunner, listAvailableGitDates, mergeGitResult } from "./readers/gitReader";
+import { readGitCommits, makeGitRunner, listAvailableGitDates, mergeGitResult, shouldEnrich, type GitEnrichMode } from "./readers/gitReader";
 import { resolveLang, type Lang } from "./prompts/recap-template";
 import { runRecap, prepareInputs } from "./llm/recapRunner";
 import { getProvider } from "./llm/providers";
@@ -185,9 +185,10 @@ async function generate(secrets: SecretsStore): Promise<void> {
   }
 
   // v1.1 ①: session 소스면 같은 날짜 git 결과(커밋·변경 파일)로 "결과" 축을 보강
-  if (source === "session" && wsPath && cfg.get<boolean>("enrichWithGit") !== false) {
+  const gitEnrich = (cfg.get<string>("gitEnrich") as GitEnrichMode) || "always";
+  if (source === "session" && wsPath && gitEnrich !== "off") {
     const gitRm = readGitCommits(path.basename(wsPath), date, makeGitRunner(wsPath));
-    if ((gitRm.commitCount ?? 0) > 0) {
+    if (shouldEnrich(gitEnrich, rm, gitRm.commitCount ?? 0)) {
       rm = mergeGitResult(rm, gitRm);
     }
   }

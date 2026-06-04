@@ -6,7 +6,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseLines } from "../src/readers/sessionReader.ts";
-import { readGitCommits, mergeGitResult, type GitRunner } from "../src/readers/gitReader.ts";
+import { readGitCommits, mergeGitResult, shouldEnrich, sessionResultWeak, type GitRunner } from "../src/readers/gitReader.ts";
 import { buildSourceBlocks, buildExtractionInstruction, buildRecapPrompt, renderSources } from "../src/prompts/recap-template.ts";
 import { enforceBudget } from "../src/llm/budget.ts";
 
@@ -78,6 +78,18 @@ const b = enforceBudget(
 const kept = b.blocks.map((x) => x.tag);
 check("R1·T1 우선 제외", b.droppedTags.includes("R1") && b.droppedTags.includes("T1"), b.droppedTags);
 check("G1 보존(P/A/G 우선)", kept.includes("G1"), kept);
+
+console.log("\n[shouldEnrich · 모드]");
+// 세션(fixture)은 변경파일·도구결과가 있어 '강한' 결과 신호
+check("세션 결과 신호 강함", sessionResultWeak(session) === false);
+check("always: 커밋 있으면 보강", shouldEnrich("always", session, 2) === true);
+check("always: 커밋 0이면 미보강", shouldEnrich("always", session, 0) === false);
+check("off: 항상 미보강", shouldEnrich("off", session, 2) === false);
+check("auto: 결과 강하면 미보강", shouldEnrich("auto", session, 2) === false);
+// 빈 세션(결과 신호 없음)
+const emptySession = parseLines([], { date: "2026-06-01", projectLabel: "p" });
+check("빈 세션은 결과 신호 약함", sessionResultWeak(emptySession) === true);
+check("auto: 결과 약하면 보강", shouldEnrich("auto", emptySession, 2) === true);
 
 console.log(`\n${failures === 0 ? "ALL PASS ✅" : `FAILURES: ${failures} ❌`}`);
 process.exit(failures === 0 ? 0 : 1);
