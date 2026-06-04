@@ -300,20 +300,24 @@ async function pickDate(available: string[], allowBack: boolean): Promise<string
   }
 
   const dates = available.slice(0, 60);
-  if (dates.length > 0) {
+  const hasLogs = dates.length > 0;
+  if (hasLogs) {
     // 로그가 있는 날짜를 메인으로 표시 (오늘/어제는 목록에 있으면 표시만 부가)
     items.push({ label: "로그가 있는 날짜", kind: vscode.QuickPickItemKind.Separator });
     for (const d of dates) {
       items.push({ label: `📄 ${d}${suffix(d)}`, value: d });
     }
   } else {
-    // 로그가 전혀 없을 때만 오늘/어제 폴백
-    items.push({ label: `오늘 (${today})`, value: today });
-    items.push({ label: `어제 (${yesterday})`, value: yesterday });
+    // 로그가 전혀 없으면 명시
+    items.push({ label: "선택할 수 있는 로그가 없습니다", kind: vscode.QuickPickItemKind.Separator });
   }
   items.push({ label: "직접 입력…", value: "" });
 
-  const picked = await vscode.window.showQuickPick(items, { placeHolder: "어느 날짜의 recap을 만들까요?" });
+  const picked = await vscode.window.showQuickPick(items, {
+    placeHolder: hasLogs
+      ? "어느 날짜의 recap을 만들까요?"
+      : "선택할 수 있는 로그가 없습니다 — 직접 입력하거나 뒤로 가세요",
+  });
   if (!picked) {
     return undefined;
   }
