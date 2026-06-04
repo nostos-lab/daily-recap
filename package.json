@@ -18,6 +18,7 @@
     "claude-code",
     "obsidian"
   ],
+  "icon": "images/dailyrecap-owl-dark-1024.png",
   "engines": {
     "vscode": "^1.85.0"
   },

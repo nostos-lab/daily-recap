@@ -8,3 +8,9 @@ tsconfig.json
 .gitignore
 node_modules/**
 !node_modules/{}/**
+images/_big.png
+images/preview.png
+images/icon.svg
+images/icon.png
+images/icon-128.png
+images/dailyrecap-owl-1024.png
