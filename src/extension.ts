@@ -286,6 +286,7 @@ async function pickProject(projects: ProjectEntry[], wsPath?: string): Promise<P
 async function pickDate(available: string[], allowBack: boolean): Promise<string | undefined> {
   const today = localDateStr(new Date());
   const yesterday = localDateStr(new Date(Date.now() - 86400000));
+  const suffix = (d: string) => (d === today ? " (오늘)" : d === yesterday ? " (어제)" : "");
 
   interface DItem {
     label: string;
@@ -297,15 +298,18 @@ async function pickDate(available: string[], allowBack: boolean): Promise<string
   if (allowBack) {
     items.push({ label: "← 프로젝트 다시 선택", back: true });
   }
-  items.push({ label: `오늘 (${today})`, value: today });
-  items.push({ label: `어제 (${yesterday})`, value: yesterday });
 
-  const extra = available.filter((d) => d !== today && d !== yesterday).slice(0, 30);
-  if (extra.length > 0) {
+  const dates = available.slice(0, 60);
+  if (dates.length > 0) {
+    // 로그가 있는 날짜를 메인으로 표시 (오늘/어제는 목록에 있으면 표시만 부가)
     items.push({ label: "로그가 있는 날짜", kind: vscode.QuickPickItemKind.Separator });
-    for (const d of extra) {
-      items.push({ label: `📄 ${d}`, value: d });
+    for (const d of dates) {
+      items.push({ label: `📄 ${d}${suffix(d)}`, value: d });
     }
+  } else {
+    // 로그가 전혀 없을 때만 오늘/어제 폴백
+    items.push({ label: `오늘 (${today})`, value: today });
+    items.push({ label: `어제 (${yesterday})`, value: yesterday });
   }
   items.push({ label: "직접 입력…", value: "" });
 
