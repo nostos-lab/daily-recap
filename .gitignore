@@ -4,3 +4,7 @@ out/
 .vscode-test/
 .DS_Store
 recaps/
+
+# env
+.env
+.env.*

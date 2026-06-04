@@ -13,7 +13,6 @@ export interface AnthropicOptions {
 const DEFAULT_BASE = "https://api.anthropic.com";
 const DEFAULT_VERSION = "2023-06-01";
 
-/** Anthropic Messages API 어댑터. fetch 직접 사용(외부 의존성 0). (PRD §6.5) */
 export class AnthropicProvider implements LLMProvider {
   readonly name = "anthropic";
   private apiKey: string;
@@ -27,7 +26,7 @@ export class AnthropicProvider implements LLMProvider {
     this.baseUrl = opts.baseUrl ?? DEFAULT_BASE;
     this.version = opts.version ?? DEFAULT_VERSION;
     if (!this.fetchImpl) {
-      throw new LLMError("unknown", "fetch를 사용할 수 없습니다(Node 18+ 또는 주입 필요).");
+      throw new LLMError("unknown", "fetch is not available (Node 18+ or injection required).");
     }
   }
 
@@ -98,7 +97,7 @@ export class AnthropicProvider implements LLMProvider {
   async stream(req: ChatRequest, onDelta: (chunk: string) => void): Promise<ChatResult> {
     const res = await this.post(req, true);
     if (!res.body || typeof res.body.getReader !== "function") {
-      throw new LLMError("unknown", "스트리밍 응답 본문을 읽을 수 없습니다.");
+      throw new LLMError("unknown", "cannot read streaming response body.");
     }
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
@@ -114,7 +113,7 @@ export class AnthropicProvider implements LLMProvider {
         return;
       }
       if (ev.type === "error") {
-        throw new LLMError("unknown", `스트림 오류: ${ev.error?.message ?? "unknown"}`);
+        throw new LLMError("unknown", `streaming error: ${ev.error?.message ?? "unknown"}`);
       }
       if (ev.type === "message_start") {
         usageIn = ev.message?.usage?.input_tokens ?? usageIn;

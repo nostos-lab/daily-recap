@@ -9,10 +9,10 @@ import type {
   FormatHealth,
 } from "../types";
 
-/** 본문을 추출할 type (PRD §6.2.1 화이트리스트) */
+/** types to extract body (whitelist) */
 const BODY_TYPES = new Set<string>(["user", "assistant"]);
 
-/** 알려진 무시 type — 미관측(unknown)과 구분하기 위함 */
+/** known ignored types — distinguish unknown (unobserved) */
 const KNOWN_IGNORED = new Set<string>([
   "attachment",
   "system",
@@ -23,11 +23,11 @@ const KNOWN_IGNORED = new Set<string>([
   "summary",
 ]);
 
-/** 변경/참조 파일 경로를 수집할 도구 (PRD §6.2) */
+/** tools to collect changed/referenced file paths */
 const FILE_PATH_TOOLS = new Set<string>(["Read", "Edit", "Write", "MultiEdit", "NotebookEdit"]);
 
 export interface ParseOptions {
-  /** YYYY-MM-DD. 이 로컬 날짜의 라인만 본문 추출 */
+  /** YYYY-MM-DD. extract lines only for this local date */
   date: string;
   projectLabel: string;
   unknownTypeThreshold?: number;
@@ -37,7 +37,7 @@ export interface ParseOptions {
 const DEFAULT_UNKNOWN_THRESHOLD = 0.3;
 const DEFAULT_JSON_FAIL_THRESHOLD = 0.1;
 
-/** timestamp(ISO) → 로컬 YYYY-MM-DD. 없으면 undefined */
+/** timestamp(ISO) → local YYYY-MM-DD. if missing, return undefined */
 function localDate(ts: unknown): string | undefined {
   if (typeof ts !== "string" || ts.length === 0) {
     return undefined;
@@ -52,7 +52,7 @@ function localDate(ts: unknown): string | undefined {
   return `${y}-${m}-${day}`;
 }
 
-/** Bash 명령에서 보수적으로 대상 파일 경로 추출(리다이렉션/touch/mv/cp 대상만) */
+/** Bash command → extract target file paths (only redirection/touch/mv/cp targets) */
 function extractBashPaths(command: unknown): string[] {
   if (typeof command !== "string") {
     return [];
@@ -95,8 +95,8 @@ function stringifyResult(content: unknown): string {
 }
 
 /**
- * 순수 함수: .jsonl 라인 배열 → RawMaterial. (PRD §6.2.1 의사알고리즘)
- * 필드가 없으면 graceful skip(방어적 파싱).
+ * pure function: .jsonl line array → RawMaterial. (PRD §6.2.1 decision algorithm)
+ * if field is missing, graceful skip (defensive parsing).
  */
 export function parseLines(lines: string[], opts: ParseOptions): RawMaterial {
   const userPrompts: RawMessage[] = [];
@@ -142,7 +142,7 @@ export function parseLines(lines: string[], opts: ParseOptions): RawMaterial {
       continue;
     }
 
-    // 본문 타입이지만 대상 날짜가 아니면 추출하지 않음
+    // body type but target date is not the same, skip extraction
     const lineDate = localDate(obj.timestamp);
     if (lineDate !== undefined && lineDate !== opts.date) {
       continue;
@@ -203,7 +203,7 @@ export function parseLines(lines: string[], opts: ParseOptions): RawMaterial {
           toolResults.push({ text, timestamp: obj.timestamp });
         }
       }
-      // thinking 및 기타 블록은 스킵 (PRD §6.2.1: thinking 본문 없음)
+      // thinking and other blocks are skipped (PRD §6.2.1: thinking body is missing)
     }
   }
 
@@ -231,7 +231,7 @@ export function parseLines(lines: string[], opts: ParseOptions): RawMaterial {
   };
 }
 
-/** 파싱 실패율·미관측 type 비율이 임계치를 넘는지 판정 (PRD §6.2) */
+/** assess parsing failure rate and unknown type ratio against thresholds */
 export function assessFormat(stats: ParseStats, opts?: ParseOptions): FormatHealth {
   const unknownT = opts?.unknownTypeThreshold ?? DEFAULT_UNKNOWN_THRESHOLD;
   const jsonT = opts?.jsonFailureThreshold ?? DEFAULT_JSON_FAIL_THRESHOLD;
@@ -247,7 +247,7 @@ export function assessFormat(stats: ParseStats, opts?: ParseOptions): FormatHeal
   return { ok: reasons.length === 0, jsonFailureRatio, unknownTypeRatio, reasons };
 }
 
-/** 세션 로그에 실제 본문이 존재하는 날짜 목록(로컬 날짜, 내림차순). */
+/** list of dates with actual body in the session log (local date, descending). */
 export function listAvailableSessionDates(files: string[]): string[] {
   const dates = new Set<string>();
   for (const f of files) {
@@ -281,7 +281,7 @@ export function listAvailableSessionDates(files: string[]): string[] {
   return [...dates].sort().reverse();
 }
 
-/** 여러 .jsonl 파일을 읽어 합쳐서 파싱 */
+/** read multiple .jsonl files and parse them */
 export function readSessionFiles(files: string[], opts: ParseOptions): RawMaterial {
   const allLines: string[] = [];
   for (const f of files) {
@@ -289,7 +289,7 @@ export function readSessionFiles(files: string[], opts: ParseOptions): RawMateri
     try {
       text = fs.readFileSync(f, "utf8");
     } catch {
-      continue; // 읽기 실패 파일은 graceful skip
+      continue; // file read failure is gracefully skipped
     }
     for (const ln of text.split(/\r?\n/)) {
       allLines.push(ln);

@@ -3,13 +3,13 @@ import type { ContentBlock } from "../llm/types";
 import { maskSensitive } from "./masking";
 
 /**
- * recap 프롬프트 템플릿 (PRD §6.3 — 핵심).
- * 순수 함수만 둔다(테스트·튜닝 용이). LLM 호출은 Phase 4.
+ * recap prompt template.
+ * pure functions only (testable·tuneable). LLM calls are in Phase 4.
  *
- * 2단 호출 설계:
- *   stage 1 = buildExtractionPrompt  → (Citations API) 인용·결정·수치 추출
- *   stage 2 = buildRecapPrompt       → 최종 recap 마크다운 생성(§6.4 골격)
- * (Citations API와 Structured Outputs는 같은 호출에서 못 켠다 — 400. §6.3)
+ * 2-stage call design:
+ *   stage 1 = buildExtractionPrompt  → (Citations API) extract citations, decisions, numbers
+ *   stage 2 = buildRecapPrompt       → generate final recap markdown (§6.4 skeleton)
+ * do not enable Citations and Structured Outputs in the same call (avoid 400). §6.3
  */
 
 export type Lang = "ko" | "en";
@@ -18,7 +18,7 @@ export function resolveLang(setting: string | undefined, ideLocale?: string): La
   if (setting === "ko" || setting === "en") {
     return setting;
   }
-  // auto: IDE 로케일을 따름
+  // auto: follow IDE locale
   return (ideLocale ?? "").toLowerCase().startsWith("ko") ? "ko" : "en";
 }
 
@@ -68,9 +68,9 @@ function summarizeToolInput(name: string, input: Record<string, unknown>): strin
 }
 
 /**
- * RawMaterial → 출처 태깅된 소스 블록. 마스킹 적용.
- * 태그: P=사용자 프롬프트, A=assistant 텍스트, T=도구 호출, R=도구 결과.
- * Phase 4에서 이 블록을 Citations 문서로 매핑한다.
+ * RawMaterial → tagged source blocks. masking applied.
+ * tags: P=user prompt, A=assistant text, T=tool call, R=tool result.
+ * in phase 4, map these blocks to Citations documents.
  */
 export function buildSourceBlocks(rm: RawMaterial): SourceBlock[] {
   const blocks: SourceBlock[] = [];
@@ -120,7 +120,7 @@ function factsLine(rm: RawMaterial): string {
 }
 
 /* ──────────────────────────────────────────────────────────────────────── */
-/* Stage 1: 추출 프롬프트 (Citations API)                                    */
+/* Stage 1: extraction prompt (Citations API)                               */
 /* ──────────────────────────────────────────────────────────────────────── */
 
 const EXTRACTION_SYSTEM: Record<Lang, string> = {
@@ -174,8 +174,8 @@ ${renderSources(blocks ?? buildSourceBlocks(rm))}`;
 }
 
 /**
- * Citations API 경로용: 소스를 인라인 텍스트가 아니라 document 블록으로 보낼 때의
- * 지시문(system + user). 실제 문서 블록은 buildCitationDocuments로 만들어 메시지에 첨부한다.
+ * Citations API path: when sending sources as document blocks instead of inline text,
+ * instruction (system + user). actual document blocks are created by buildCitationDocuments and attached to the message.
  */
 export function buildExtractionInstruction(rm: RawMaterial, lang: Lang): PromptPair {
   const intro =
@@ -190,7 +190,7 @@ ${extractionSchemaHint(lang)}`;
   return { system: EXTRACTION_SYSTEM[lang], user };
 }
 
-/** SourceBlock → Citations 가능한 document 콘텐츠 블록 (PRD §6.3) */
+/** SourceBlock → Citations possible document content blocks */
 export function buildCitationDocuments(blocks: SourceBlock[]): ContentBlock[] {
   return blocks.map((b) => ({
     type: "document",
@@ -201,10 +201,10 @@ export function buildCitationDocuments(blocks: SourceBlock[]): ContentBlock[] {
 }
 
 /* ──────────────────────────────────────────────────────────────────────── */
-/* Stage 2: recap 생성 프롬프트                                              */
+/* Stage 2: recap generation prompt                                         */
 /* ──────────────────────────────────────────────────────────────────────── */
 
-/** §6.4 출력 골격. recap-skeleton.md와 동기화(테스트로 보장). */
+/** output skeleton. sync with recap-skeleton.md (test guaranteed). */
 export const RECAP_SKELETON = `# {YYYY-MM-DD} · {프로젝트명} 의사결정 recap
 
 > **오늘 한 줄**: {그날 가장 중요한 결정 1개를 25단어 이내로}

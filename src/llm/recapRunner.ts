@@ -11,10 +11,10 @@ import {
 import { enforceBudget } from "./budget";
 
 /**
- * 2단 호출 오케스트레이션 (PRD §6.3, §6.5).
- *   stage 1: Citations API로 인용·결정·수치 추출 (비스트리밍)
- *   stage 2: recap 마크다운 생성 (스트리밍)
- * Citations와 Structured Outputs를 같은 호출에서 켜지 않는다(400 회피). 추출은 JSON을 텍스트로 받는다.
+ * 2-stage call orchestration.
+ *   stage 1: extract citations, decisions, numbers using Citations API (non-streaming)
+ *   stage 2: generate recap markdown (streaming)
+ * do not enable Citations and Structured Outputs in the same call (avoid 400). extract as text.
  */
 
 const DEFAULT_MAX_INPUT_TOKENS = 150000;
@@ -25,7 +25,7 @@ export interface RunOptions {
   lang: Lang;
   maxInputTokens?: number;
   maxOutputTokens?: number;
-  /** false면 인라인 텍스트 추출(Citations 미사용) */
+  /** false means inline text extraction (Citations disabled) */
   useCitations?: boolean;
   onDelta?: (chunk: string) => void;
   signal?: AbortSignal;
@@ -47,7 +47,7 @@ export interface RunResult {
   warnings: string[];
 }
 
-/** 호출 전 입력 준비 + 예산 적용(대략 토큰 규모 표시용). */
+/** prepare inputs before calling + apply budget (show approximate token size). */
 export function prepareInputs(rm: RawMaterial, maxInputTokens = DEFAULT_MAX_INPUT_TOKENS): PreparedInput {
   const budget = enforceBudget(buildSourceBlocks(rm), maxInputTokens);
   return {
@@ -64,12 +64,12 @@ export async function runRecap(provider: LLMProvider, rm: RawMaterial, opts: Run
   const prepared = prepareInputs(rm, opts.maxInputTokens ?? DEFAULT_MAX_INPUT_TOKENS);
   if (prepared.truncated) {
     warnings.push(
-      `입력이 커서 일부 소스를 줄였습니다(추정 ${prepared.estTokens} 토큰, 제외 ${prepared.droppedTags.length}개).`
+      `input too large, trimmed some sources (estimated ${prepared.estTokens} tokens, dropped ${prepared.droppedTags.length} tags).`
     );
   }
   const blocks = prepared.blocks;
 
-  // ── stage 1: 추출 ──
+  // ── stage 1: extraction ──
   let extraction = "";
   let citations: CitationRef[] = [];
   if (opts.useCitations !== false) {
@@ -98,7 +98,7 @@ export async function runRecap(provider: LLMProvider, rm: RawMaterial, opts: Run
     extraction = res.text;
   }
 
-  // ── stage 2: recap 생성(스트리밍) ──
+  // ── stage 2: generate recap (streaming) ──
   const rp = buildRecapPrompt(rm, extraction, opts.lang, blocks);
   const gen = await provider.stream(
     {

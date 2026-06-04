@@ -25,7 +25,7 @@ export function deactivate() {
   /* no-op */
 }
 
-/* ── recap.setApiKey ── (PRD §6.1) */
+/* ── recap.setApiKey ── */
 async function setApiKey(secrets: SecretsStore): Promise<void> {
   const value = await vscode.window.showInputBox({
     title: "DailyRecap — Anthropic API 키",
@@ -46,7 +46,7 @@ async function setApiKey(secrets: SecretsStore): Promise<void> {
   vscode.window.showInformationMessage("DailyRecap: API 키를 저장했습니다.");
 }
 
-/* ── recap.generate (전체 플로우) ── */
+/* ── recap.generate (full flow) ── */
 async function safeGenerate(secrets: SecretsStore): Promise<void> {
   try {
     await generate(secrets);
@@ -69,7 +69,7 @@ async function safeGenerate(secrets: SecretsStore): Promise<void> {
 async function generate(secrets: SecretsStore): Promise<void> {
   const cfg = vscode.workspace.getConfiguration("recap");
 
-  // 1) 키 확인
+  // 1) check API key
   const apiKey = await secrets.getApiKey();
   if (!apiKey) {
     const c = await vscode.window.showInformationMessage("DailyRecap: 먼저 API 키를 설정해야 합니다.", "API 키 설정");
@@ -79,7 +79,7 @@ async function generate(secrets: SecretsStore): Promise<void> {
     return;
   }
 
-  // 2) 원재료 수집 (소스: session 기본 / git 폴백) — PRD §6.2
+  // 2) collect raw material (source: session default / git fallback)
   const wsPath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   let source: "session" | "git" = cfg.get<string>("source") === "git" ? "git" : "session";
   let rm: RawMaterial | undefined;
@@ -125,7 +125,7 @@ async function generate(secrets: SecretsStore): Promise<void> {
       source = "git";
       rm = readGitCommits(label, date, runner);
     } else {
-      // 프로젝트 → 날짜 (뒤로가기 지원)
+      // project → date (back button support)
       let project: ProjectEntry | undefined;
       let step = 0;
       for (;;) {
@@ -153,7 +153,7 @@ async function generate(secrets: SecretsStore): Promise<void> {
       for (const w of rm.warnings) {
         vscode.window.showWarningMessage(`DailyRecap: ${w}`);
       }
-      // 빈 상태/포맷 경고 → git 폴백 제안 (PRD §6.2, §6.8)
+      // empty state/format warning → git fallback suggestion
       const empty = rm.userPrompts.length === 0 && rm.assistantTexts.length === 0 && rm.toolSequence.length === 0;
       if (empty || rm.warnings.length > 0) {
         if (wsPath) {
@@ -184,7 +184,7 @@ async function generate(secrets: SecretsStore): Promise<void> {
     return;
   }
 
-  // 5) 토큰 규모 표시 + 확인
+  // 5) show token size + confirm
   const prep = prepareInputs(rm);
   const go = await vscode.window.showInformationMessage(
     `recap을 생성할까요? (출처: ${source === "git" ? "git 커밋" : "세션 로그"}, 대략 입력 ${prep.estTokens.toLocaleString()} 토큰${prep.truncated ? ", 일부 소스 축소됨" : ""})`,
@@ -195,7 +195,7 @@ async function generate(secrets: SecretsStore): Promise<void> {
     return;
   }
 
-  // 6) LLM 호출 (진행 상태바, 스트리밍은 상태 메시지로 — PRD §6.5 폴백)
+  // 6) LLM call (progress bar, streaming is status message — PRD §6.5 fallback)
   const lang: Lang = resolveLang(cfg.get<string>("lang"), vscode.env.language);
   const model = cfg.get<string>("model") || "claude-sonnet-4-6";
   const provider = getProvider({ provider: cfg.get<string>("provider") || "anthropic", apiKey });
@@ -223,7 +223,7 @@ async function generate(secrets: SecretsStore): Promise<void> {
     return;
   }
 
-  // 7) 미리보기 (웹뷰)
+  // 7) preview (webview)
   const panel = vscode.window.createWebviewPanel(
     "dailyrecap.preview",
     `Recap ${date} · ${label}`,
@@ -237,7 +237,7 @@ async function generate(secrets: SecretsStore): Promise<void> {
     title: `Recap ${date}`,
   });
 
-  // 8) 기록 목적지 선택 + append
+  // 8) pick recording destination + append
   const sinkKind = await pickSink();
   if (!sinkKind) {
     return;
@@ -261,7 +261,7 @@ async function generate(secrets: SecretsStore): Promise<void> {
 
 /* ── helpers ── */
 
-/** 프로젝트 선택. 자동 매칭 항목을 맨 위에 추천으로 두되 항상 변경 가능. */
+/** pick project. automatically recommended at the top, but always changeable. */
 async function pickProject(projects: ProjectEntry[], wsPath?: string): Promise<ProjectEntry | undefined> {
   const matched = wsPath ? matchProject(wsPath, projects) : undefined;
   const items: Array<{ label: string; description?: string; entry: ProjectEntry }> = [];
@@ -280,8 +280,8 @@ async function pickProject(projects: ProjectEntry[], wsPath?: string): Promise<P
 }
 
 /**
- * 날짜 선택. 오늘/어제 + 실제 로그/커밋이 있는 날짜 + 직접입력.
- * allowBack이면 "← 프로젝트 다시 선택" 제공(반환 "BACK"). 취소는 undefined.
+ * pick date. today/yesterday + actual logs/commits + direct input.
+ * if allowBack, provide "← project reselect" (return "BACK"). cancel is undefined.
  */
 async function pickDate(available: string[], allowBack: boolean): Promise<string | undefined> {
   const today = localDateStr(new Date());
@@ -302,13 +302,13 @@ async function pickDate(available: string[], allowBack: boolean): Promise<string
   const dates = available.slice(0, 60);
   const hasLogs = dates.length > 0;
   if (hasLogs) {
-    // 로그가 있는 날짜를 메인으로 표시 (오늘/어제는 목록에 있으면 표시만 부가)
+    // show dates with logs (today/yesterday are only shown if in the list)
     items.push({ label: "로그가 있는 날짜", kind: vscode.QuickPickItemKind.Separator });
     for (const d of dates) {
       items.push({ label: `📄 ${d}${suffix(d)}`, value: d });
     }
   } else {
-    // 로그가 전혀 없으면 명시
+    // no logs available, explicitly state
     items.push({ label: "선택할 수 있는 로그가 없습니다", kind: vscode.QuickPickItemKind.Separator });
   }
   items.push({ label: "직접 입력…", value: "" });

@@ -4,7 +4,7 @@
   "description": "AI 코딩 세션 로그를 읽어 '오늘의 의사결정 recap' 회고 문서를 자동 생성하고 Notion/Obsidian/로컬에 기록하는 BYOK VSCode 확장",
   "version": "0.0.1",
   "publisher": "local-dev",
-  "author": "지형 (arbor8207)",
+  "author": "nostos-lab",
   "license": "MIT",
   "repository": {
     "type": "git",

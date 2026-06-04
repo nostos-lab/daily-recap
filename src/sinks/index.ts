@@ -2,16 +2,16 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 
 /**
- * 기록 목적지 어댑터 (PRD §6.6).
- * append(recap, date) → 기록 위치. 같은 날짜 파일이 있으면 append(중복 방지), 새 날짜면 생성.
- * 순수 node(fs)로 구현해 테스트 가능. Notion은 Phase 6(시간 남으면).
+ * recording destination adapter.
+ * append(recap, date) → recording location. if same date file exists, append (avoid duplicates), if new date, create.
+ * pure node(fs) implementation for testing. Notion is reserved for Phase 6 (if time permits).
  */
 
 export interface SinkResult {
   path: string;
   created: boolean;
   appended: boolean;
-  skipped: boolean; // 동일 내용이 이미 있어 중복 기록을 건너뜀
+  skipped: boolean; // same content already exists, skip recording
 }
 
 export interface RecapSink {
@@ -38,7 +38,7 @@ async function pathExists(p: string): Promise<boolean> {
   }
 }
 
-/** 파일 생성 또는 append(중복 내용 skip). frontmatter는 새 파일 생성 시에만 1회. */
+/** file creation or append (skip duplicate content). frontmatter is only once on new file creation. */
 export async function writeOrAppend(filePath: string, recap: string, frontmatter?: string): Promise<SinkResult> {
   await fs.mkdir(path.dirname(filePath), { recursive: true });
   const body = recap.trimEnd();
@@ -55,7 +55,7 @@ export async function writeOrAppend(filePath: string, recap: string, frontmatter
   return { path: filePath, created: true, appended: false, skipped: false };
 }
 
-/** 로컬: <outputDir>/YYYY/MM/DD-recap.md */
+/** local: <outputDir>/YYYY/MM/DD-recap.md */
 export class LocalSink implements RecapSink {
   readonly name = "local";
   private outputDir: string;
@@ -71,7 +71,7 @@ export class LocalSink implements RecapSink {
   }
 }
 
-/** Obsidian: <vault>/_Recap/YYYY/MM/DD.md (파일시스템 직접, 앱/인증 불필요) */
+/** Obsidian: <vault>/_Recap/YYYY/MM/DD.md (filesystem direct, app/auth not required) */
 export class ObsidianSink implements RecapSink {
   readonly name = "obsidian";
   private vault: string;

@@ -1,11 +1,11 @@
 import type { SourceBlock } from "../prompts/recap-template";
 
 /**
- * 입력 길이 가드레일 (PRD §6.5).
- * 토큰 추정치가 상한을 넘으면 소스를 잘라내고 경고. 호출 전 대략 토큰 규모를 표시.
+ * input length guardrail
+ * if estimated token count exceeds the limit, trim the source and warn. show approximate token size before calling.
  */
 
-/** 보수적(과대) 토큰 추정: 한/영 혼합 대비 ~3자/토큰 */
+/** conservative (overestimated) token estimation: ~3 chars/token for mixed English/Korean */
 export function estimateTokens(text: string): number {
   if (!text) {
     return 0;
@@ -17,13 +17,13 @@ function blockTokens(b: SourceBlock): number {
   return estimateTokens(b.label) + estimateTokens(b.content) + 8;
 }
 
-/** 태그 우선순위(클수록 보존): 사용자 프롬프트 > assistant > 도구호출 > 도구결과 */
+/** priority (higher means preserved): user prompt > assistant > tool call > tool result */
 function priority(tag: string): number {
   const c = tag.charAt(0);
   if (c === "P") return 3;
   if (c === "A") return 2;
   if (c === "T") return 1;
-  return 0; // R 등
+  return 0; // R etc.
 }
 
 export interface BudgetResult {
@@ -34,9 +34,9 @@ export interface BudgetResult {
 }
 
 /**
- * 소스 블록을 maxTokens 예산 안으로 맞춘다.
- * 1) 낮은 우선순위(R→T)부터, 같은 우선순위는 뒤쪽부터 제거
- * 2) P/A만 남아도 초과하면 가장 긴 블록 본문을 점진적으로 클립
+ * trim source blocks to fit within maxTokens budget
+ * 1) start from lowest priority (R→T), then remove from back for same priority
+ * 2) if only P/A remains, trim the longest block content progressively
  */
 export function enforceBudget(input: SourceBlock[], maxTokens: number): BudgetResult {
   const blocks = input.map((b) => ({ ...b }));
@@ -46,12 +46,12 @@ export function enforceBudget(input: SourceBlock[], maxTokens: number): BudgetRe
   const total = () => blocks.reduce((s, b) => s + blockTokens(b), 0);
 
   while (total() > maxTokens) {
-    // 제거 가능한(T·R) 후보 중 가장 낮은 우선순위, 동률이면 뒤쪽 블록 선택
+    // select the lowest priority candidate among removable (T·R) blocks, then remove from back for tie
     let dropIdx = -1;
     for (let i = 0; i < blocks.length; i++) {
       const p = priority(blocks[i].tag);
       if (p >= 2) {
-        continue; // P/A는 보존
+        continue; // P/A are preserved
       }
       if (dropIdx === -1) {
         dropIdx = i;
@@ -67,7 +67,7 @@ export function enforceBudget(input: SourceBlock[], maxTokens: number): BudgetRe
       blocks.splice(dropIdx, 1);
       continue;
     }
-    // P/A만 남음 → 가장 긴 본문 클립
+    // if only P/A remains, trim the longest block content progressively
     let longest = -1;
     let longestLen = 0;
     for (let i = 0; i < blocks.length; i++) {
@@ -77,10 +77,10 @@ export function enforceBudget(input: SourceBlock[], maxTokens: number): BudgetRe
       }
     }
     if (longest < 0 || longestLen < 80) {
-      break; // 더 줄일 수 없음
+      break; // cannot trim anymore
     }
     const cut = Math.floor(blocks[longest].content.length * 0.7);
-    blocks[longest].content = blocks[longest].content.slice(0, cut) + " …(예산 초과로 생략)";
+    blocks[longest].content = blocks[longest].content.slice(0, cut) + " …(budget exceeded, truncated)";
     truncated = true;
   }
 

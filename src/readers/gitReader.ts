@@ -2,9 +2,9 @@ import { execFileSync } from "node:child_process";
 import type { RawMaterial, RawMessage, RawToolUse, ParseStats } from "../types";
 
 /**
- * git 커밋 폴백 리더 (PRD §6.2 GitCommitReader).
- * 세션 로그가 없을 때(또는 사용자가 git 소스를 택할 때) 그날 커밋·변경 파일을 원재료로 삼는다.
- * git 실행은 주입형 러너로 분리해 순수 테스트 가능.
+ * git commit fallback reader.
+ * when session log is missing (or user chooses git source), use that day's commits and changed files as raw material.
+ * git execution is separated into a injectable runner for pure testing.
  */
 
 export type GitRunner = (args: string[]) => string;
@@ -32,7 +32,7 @@ function isoToLocalDate(iso: string): string | undefined {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-/** 실제 git 실행 러너(기본). 실패 시 빈 문자열 → 상위에서 빈 결과 처리. */
+/** actual git execution runner (default). if fails, return empty string → handled by higher level. */
 export function makeGitRunner(repoPath: string): GitRunner {
   return (args) => {
     try {
@@ -43,7 +43,7 @@ export function makeGitRunner(repoPath: string): GitRunner {
   };
 }
 
-/** 저장소가 커밋을 가진 날짜 목록(내림차순). */
+/** list of dates with commits (descending). */
 export function listAvailableGitDates(run: GitRunner): string[] {
   const out = run(["log", "--pretty=format:%aI"]);
   const dates = new Set<string>();
@@ -56,7 +56,7 @@ export function listAvailableGitDates(run: GitRunner): string[] {
   return [...dates].sort().reverse();
 }
 
-/** 특정 날짜의 커밋 → RawMaterial(source:'git'). */
+/** commits for a specific date → RawMaterial(source:'git'). */
 export function readGitCommits(projectLabel: string, date: string, run: GitRunner): RawMaterial {
   const logOut = run([
     "log",
@@ -90,7 +90,7 @@ export function readGitCommits(projectLabel: string, date: string, run: GitRunne
   const seen = new Set<string>();
 
   for (const c of commits) {
-    // 커밋 메시지 = 개발자가 명시한 의도 → 사용자 프롬프트(P)로 매핑
+    // commit message = developer's explicit intention → map to user prompt (P)
     const text = c.body ? `${c.subject}\n\n${c.body}` : c.subject;
     userPrompts.push({ role: "user", text, timestamp: c.iso, uuid: c.hash });
 

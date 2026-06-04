@@ -1,6 +1,6 @@
-/** LLM 프로바이더 추상화 (PRD §6.5). v1 구현은 Anthropic만. */
+/** LLM provider abstraction. v1 implements Anthropic only. */
 
-/** Anthropic Messages API content block (text 또는 document 등) */
+/** Anthropic Messages API content block (text or document etc.) */
 export type ContentBlock =
   | { type: "text"; text: string }
   | {
@@ -22,7 +22,7 @@ export interface ChatRequest {
   system: string;
   messages: ProviderMessage[];
   maxTokens: number;
-  /** 추출 단계에서 출력 비결정성 줄이기 위해 0 권장 */
+  /** 0 recommended to reduce output determinism in extraction phase */
   temperature?: number;
   signal?: AbortSignal;
 }
@@ -41,8 +41,8 @@ export interface ChatResult {
 
 export interface LLMProvider {
   readonly name: string;
-  /** 비스트리밍 호출 (stage 1 추출에 사용) */
+  /** non-streaming call (used for stage 1 extraction) */
   complete(req: ChatRequest): Promise<ChatResult>;
-  /** 스트리밍 호출 (stage 2 생성). onDelta로 텍스트 조각 전달 */
+  /** call streaming to generate recap (stage 2). pass text chunks to onDelta */
   stream(req: ChatRequest, onDelta: (chunk: string) => void): Promise<ChatResult>;
 }

@@ -1,7 +1,7 @@
 /**
- * 미리보기 렌더 (PRD §6.5).
- * 외부 의존성 최소화 원칙에 따라 markdown-it 대신, recap 골격이 쓰는 마크다운 부분집합만
- * 처리하는 의존성 0 렌더러를 둔다(테스트 가능). 더 풍부한 렌더가 필요하면 markdown-it로 교체.
+ * preview renderer.
+ * minimize external dependencies by handling only the subset of markdown used by the recap skeleton.
+ * if richer rendering is needed, replace with markdown-it.
  */
 
 function escapeHtml(s: string): string {
@@ -11,7 +11,7 @@ function escapeHtml(s: string): string {
     .replace(/>/g, "&gt;");
 }
 
-/** 인라인: 코드 → 볼드 → 이탤릭 → 링크 (입력은 먼저 escape) */
+/** inline: code → bold → italic → link (input is first escaped) */
 export function renderInline(text: string): string {
   let t = escapeHtml(text);
   t = t.replace(/`([^`]+)`/g, (_m, c) => `<code>${c}</code>`);
@@ -60,7 +60,7 @@ export function renderMarkdown(md: string): string {
       continue;
     }
 
-    // 수평선
+    // horizontal rule
     if (/^\s*---+\s*$/.test(line)) {
       flushPara();
       out.push("<hr>");
@@ -68,7 +68,7 @@ export function renderMarkdown(md: string): string {
       continue;
     }
 
-    // 제목
+    // heading
     const h = /^(#{1,6})\s+(.*)$/.exec(line);
     if (h) {
       flushPara();
@@ -78,7 +78,7 @@ export function renderMarkdown(md: string): string {
       continue;
     }
 
-    // 인용
+    // quote
     if (/^\s*>\s?/.test(line)) {
       flushPara();
       const quote: string[] = [];
@@ -90,7 +90,7 @@ export function renderMarkdown(md: string): string {
       continue;
     }
 
-    // 표
+    // table
     if (isTableRow(line) && i + 1 < lines.length && isTableSeparator(lines[i + 1])) {
       flushPara();
       const header = splitRow(line);
@@ -108,7 +108,7 @@ export function renderMarkdown(md: string): string {
       continue;
     }
 
-    // 목록
+    // list
     if (/^\s*[-*]\s+/.test(line)) {
       flushPara();
       const items: string[] = [];
@@ -120,7 +120,7 @@ export function renderMarkdown(md: string): string {
       continue;
     }
 
-    // 단락 누적
+    // accumulate paragraph
     para.push(line);
     i++;
   }
@@ -134,7 +134,7 @@ export interface WebviewHtmlOptions {
   title?: string;
 }
 
-/** 웹뷰 전체 HTML(CSP 적용). bodyHtml은 renderMarkdown 결과. 순수 함수(테스트 가능). */
+/** full webview HTML (CSP applied). bodyHtml is the result of renderMarkdown. pure function (testable). */
 export function getWebviewHtml(bodyHtml: string, opts: WebviewHtmlOptions): string {
   const title = opts.title ?? "DailyRecap";
   const csp = `default-src 'none'; style-src ${opts.cspSource} 'nonce-${opts.nonce}'; img-src ${opts.cspSource} https: data:;`;

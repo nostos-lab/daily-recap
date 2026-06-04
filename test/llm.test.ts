@@ -173,7 +173,7 @@ const rmBig = parseLines(
   { date: "2026-06-01", projectLabel: "p" }
 );
 const outBig = await runRecap(fake, rmBig, { model: "m", lang: "ko", useCitations: false, maxInputTokens: 50 });
-check("예산 초과 경고 추가", outBig.warnings.some((w) => w.includes("입력이 커서")), outBig.warnings);
+check("예산 초과 경고 추가", outBig.warnings.some((w) => w.includes("input too large")), outBig.warnings);
 
 console.log(`\n${failures === 0 ? "ALL PASS ✅" : `FAILURES: ${failures} ❌`}`);
 process.exit(failures === 0 ? 0 : 1);
