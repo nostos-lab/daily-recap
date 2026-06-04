@@ -136,7 +136,7 @@ async function generate(secrets: SecretsStore): Promise<void> {
           }
           step = 1;
         } else {
-          const picked = await pickDate(listAvailableSessionDates(listSessionFiles(project.dir)), true);
+          const picked = await pickDate(listAvailableSessionDates(listSessionFiles(project!.dir)), true);
           if (!picked) {
             return;
           }
