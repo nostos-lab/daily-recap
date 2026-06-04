@@ -8,7 +8,14 @@ function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/** allow only safe URL schemes; otherwise neutralize (defense-in-depth for forks). */
+function safeUrl(url: string): string {
+  return /^(https?:|mailto:|#|\/)/i.test(url) ? url : "#";
 }
 
 /** inline: code → bold → italic → link (input is first escaped) */
@@ -17,7 +24,7 @@ export function renderInline(text: string): string {
   t = t.replace(/`([^`]+)`/g, (_m, c) => `<code>${c}</code>`);
   t = t.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   t = t.replace(/\*([^*]+)\*/g, "<em>$1</em>");
-  t = t.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2">$1</a>');
+  t = t.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, label, url) => `<a href="${safeUrl(url)}">${label}</a>`);
   return t;
 }
 
