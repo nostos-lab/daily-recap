@@ -8,9 +8,3 @@ recaps/
 # env
 .env
 .env.*
-# scratch
-images/_big.png
-images/preview.png
-images/icon.svg
-images/icon.png
-images/icon-128.png
