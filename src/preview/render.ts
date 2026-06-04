@@ -144,7 +144,7 @@ export interface WebviewHtmlOptions {
 /** full webview HTML (CSP applied). bodyHtml is the result of renderMarkdown. pure function (testable). */
 export function getWebviewHtml(bodyHtml: string, opts: WebviewHtmlOptions): string {
   const title = opts.title ?? "DailyRecap";
-  const csp = `default-src 'none'; style-src ${opts.cspSource} 'nonce-${opts.nonce}'; img-src ${opts.cspSource} https: data:;`;
+  const csp = `default-src 'none'; style-src ${opts.cspSource} 'nonce-${opts.nonce}'; img-src ${opts.cspSource} data:;`;
   return `<!DOCTYPE html>
 <html lang="ko">
 <head>
