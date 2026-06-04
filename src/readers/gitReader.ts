@@ -2,6 +2,21 @@ import { execFileSync } from "node:child_process";
 import type { RawMaterial, RawMessage, RawToolUse, ParseStats } from "../types";
 
 /**
+ * Merge a same-date git RawMaterial into a session RawMaterial as the "result" axis
+ * evidence (v1.1 ①: session = process/why, git = result/what-shipped).
+ */
+export function mergeGitResult(session: RawMaterial, git: RawMaterial): RawMaterial {
+  return {
+    ...session,
+    git: {
+      commitCount: git.commitCount ?? git.userPrompts.length,
+      changedFiles: git.changedFiles,
+      commits: git.userPrompts.map((p) => ({ text: p.text, timestamp: p.timestamp, hash: p.uuid })),
+    },
+  };
+}
+
+/**
  * git commit fallback reader.
  * when session log is missing (or user chooses git source), use that day's commits and changed files as raw material.
  * git execution is separated into a injectable runner for pure testing.

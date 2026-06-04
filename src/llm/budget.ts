@@ -17,11 +17,12 @@ function blockTokens(b: SourceBlock): number {
   return estimateTokens(b.label) + estimateTokens(b.content) + 8;
 }
 
-/** priority (higher means preserved): user prompt > assistant > tool call > tool result */
+/** priority (higher means preserved): user prompt > assistant > git result > tool call > tool result */
 function priority(tag: string): number {
   const c = tag.charAt(0);
-  if (c === "P") return 3;
-  if (c === "A") return 2;
+  if (c === "P") return 4;
+  if (c === "A") return 3;
+  if (c === "G") return 2; // git result evidence (v1.1) — preserved like P/A
   if (c === "T") return 1;
   return 0; // R etc.
 }

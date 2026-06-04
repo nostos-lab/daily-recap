@@ -56,8 +56,23 @@ export interface RawMaterial {
   commitCount?: number;
   /** number of user turns (= userPrompts.length) or commits */
   turnCount: number;
+  /** session 소스에 같은 날짜 git 결과를 보강(v1.1 ①). "결과" 축 근거. */
+  git?: GitContext;
   stats: ParseStats;
   warnings: string[];
+}
+
+/** git result enrichment for the "result" axis (v1.1: session+git fusion) */
+export interface GitCommitInfo {
+  text: string;
+  timestamp?: string;
+  hash?: string;
+}
+
+export interface GitContext {
+  commitCount: number;
+  changedFiles: string[];
+  commits: GitCommitInfo[];
 }
 
 /** format variation detection result */

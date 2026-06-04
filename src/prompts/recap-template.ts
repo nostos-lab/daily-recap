@@ -104,6 +104,23 @@ export function buildSourceBlocks(rm: RawMaterial): SourceBlock[] {
       content: maskSensitive(clip(r.text, 500)),
     })
   );
+  // git 결과 보강(v1.1 ①): "결과" 축 근거. G 태그.
+  if (rm.git) {
+    rm.git.commits.forEach((c, i) =>
+      blocks.push({
+        tag: `G${i + 1}`,
+        label: `git 커밋 @${hhmmss(c.timestamp)}`,
+        content: maskSensitive(clip(c.text, 500)),
+      })
+    );
+    if (rm.git.changedFiles.length > 0) {
+      blocks.push({
+        tag: "GF",
+        label: "git 변경 파일",
+        content: maskSensitive(clip(rm.git.changedFiles.join(", "), 800)),
+      });
+    }
+  }
   return blocks;
 }
 
@@ -116,7 +133,11 @@ function factsLine(rm: RawMaterial): string {
   if (rm.source === "git") {
     return `날짜=${rm.date} · 프로젝트=${rm.project} · 커밋=${rm.commitCount ?? rm.turnCount}개 · 변경 파일=${files}개 (출처: git 커밋)`;
   }
-  return `날짜=${rm.date} · 프로젝트=${rm.project} · 사용자 턴=${rm.turnCount} · 세션=${rm.sessionCount} · 변경/참조 파일=${files}개`;
+  const base = `날짜=${rm.date} · 프로젝트=${rm.project} · 사용자 턴=${rm.turnCount} · 세션=${rm.sessionCount} · 변경/참조 파일=${files}개`;
+  if (rm.git) {
+    return `${base} · git 커밋=${rm.git.commitCount}개 · git 변경 파일=${rm.git.changedFiles.length}개`;
+  }
+  return base;
 }
 
 /* ──────────────────────────────────────────────────────────────────────── */
@@ -256,6 +277,7 @@ const RECAP_SYSTEM: Record<Lang, string> = {
 7) '오늘 한 줄'은 옵션 기호((a)/(b)/(c))나 내부 약어 없이, 처음 보는 사람도 이해할 평이한 한 문장(25단어 이내)으로 쓴다.
 8) '고려한 대안'은 대안마다 별도 불릿으로 나누고, 각 불릿은 "대안 — 채택/기각 이유 (출처)" 형식으로 쓴다.
 9) 분량 가이드(섹션별 40~75단어)를 지킨다.
+10) '그 결정으로 어떤 결과를 얻었나' 섹션은 git 결과(G 태그: 커밋·변경 파일)가 있으면 그것을 최우선 근거로 삼는다.
 출력은 채워진 마크다운 recap 한 편만. 코드펜스로 감싸지 말 것.`,
   en: `You are a retrospective editor who turns a developer's day of coding into a "decision recap".
 Rules:
@@ -268,6 +290,7 @@ Rules:
 7) Write the one-liner in plain language a newcomer understands (under 25 words) — no option letters ((a)/(b)/(c)) or internal jargon.
 8) In "alternatives", use one bullet per alternative: "alternative — chosen/rejected because (source)".
 9) Respect length guidance (40–75 words per section).
+10) For "what result did it produce", prioritize git evidence (G tags: commits, changed files) when present.
 Output only the filled markdown recap. Do not wrap it in a code fence.`,
 };
 

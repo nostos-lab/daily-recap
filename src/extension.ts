@@ -5,7 +5,7 @@ import { SecretsStore } from "./secrets";
 import type { RawMaterial } from "./types";
 import { getClaudeProjectsDir, listProjects, matchProject, listSessionFiles, type ProjectEntry } from "./readers/projectPaths";
 import { readSessionFiles, listAvailableSessionDates } from "./readers/sessionReader";
-import { readGitCommits, makeGitRunner, listAvailableGitDates } from "./readers/gitReader";
+import { readGitCommits, makeGitRunner, listAvailableGitDates, mergeGitResult } from "./readers/gitReader";
 import { resolveLang, type Lang } from "./prompts/recap-template";
 import { runRecap, prepareInputs } from "./llm/recapRunner";
 import { getProvider } from "./llm/providers";
@@ -182,6 +182,14 @@ async function generate(secrets: SecretsStore): Promise<void> {
   if (!rm || (rm.userPrompts.length === 0 && rm.toolSequence.length === 0)) {
     vscode.window.showInformationMessage(`${date || "선택한 날짜"}에 기록을 찾지 못했습니다 — 다른 날짜를 선택해 보세요.`);
     return;
+  }
+
+  // v1.1 ①: session 소스면 같은 날짜 git 결과(커밋·변경 파일)로 "결과" 축을 보강
+  if (source === "session" && wsPath && cfg.get<boolean>("enrichWithGit") !== false) {
+    const gitRm = readGitCommits(path.basename(wsPath), date, makeGitRunner(wsPath));
+    if ((gitRm.commitCount ?? 0) > 0) {
+      rm = mergeGitResult(rm, gitRm);
+    }
   }
 
   // 5) show token size + confirm
