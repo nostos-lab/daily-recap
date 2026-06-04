@@ -222,7 +222,7 @@ export const RECAP_SKELETON = `# {YYYY-MM-DD} · {프로젝트명} 의사결정 
 "~한 맥락에서, ~를 우려해, ~를 택했고, ~를 감수했다."}
 
 - **트리거** — {세션/커밋에서 가져온 짧은 verbatim 인용 + 출처}
-- **고려한 대안** — {등장한 대안과 기각 이유. 없으면 "기록되지 않음"}
+- **고려한 대안** — {대안마다 별도 불릿으로: "대안 — 채택/기각 이유 (출처)". 없으면 "기록되지 않음"}
 
 ## 그 결정으로 어떤 결과를 얻었나?
 
@@ -250,18 +250,24 @@ const RECAP_SYSTEM: Record<Lang, string> = {
 1) 아래 골격(템플릿)의 제목·섹션·순서·표를 그대로 따른다. 섹션을 추가/삭제하지 않는다.
 2) 결정은 사용자가 명시적으로 선택/지시한 것만 단정한다(암묵적 수용 가드레일). 모호한 것은 맥락으로만.
 3) 원재료(출처 태그가 달린 소스)에 없는 사실·수치·인용을 지어내지 않는다. 없으면 골격이 지시한 "기록되지 않음"/"측정되지 않음"을 쓴다.
-4) 각 결정의 '왜'는 Y-Statement로: "~한 맥락에서, ~를 우려해, ~를 택했고, ~를 감수했다."
-5) verbatim 인용에는 출처 태그(P/A/T/R)를 괄호로 덧붙인다. 예: ("…" — P1)
-6) 분량 가이드(섹션별 40~75단어, 오늘 한 줄 25단어 이내)를 지킨다.
+4) **모든 수치·통계·고유명사·결과에는 반드시 출처 태그(P/A/T/R)를 동반한다. 태그로 뒷받침할 수 없는 수치는 절대 쓰지 말고 "기록되지 않음"으로 처리한다.** (환각 차단의 핵심)
+5) 각 결정의 '왜'는 Y-Statement로: "~한 맥락에서, ~를 우려해, ~를 택했고, ~를 감수했다."
+6) verbatim 인용에는 출처 태그(P/A/T/R)를 괄호로 덧붙인다. 예: ("…" — P1)
+7) '오늘 한 줄'은 옵션 기호((a)/(b)/(c))나 내부 약어 없이, 처음 보는 사람도 이해할 평이한 한 문장(25단어 이내)으로 쓴다.
+8) '고려한 대안'은 대안마다 별도 불릿으로 나누고, 각 불릿은 "대안 — 채택/기각 이유 (출처)" 형식으로 쓴다.
+9) 분량 가이드(섹션별 40~75단어)를 지킨다.
 출력은 채워진 마크다운 recap 한 편만. 코드펜스로 감싸지 말 것.`,
   en: `You are a retrospective editor who turns a developer's day of coding into a "decision recap".
 Rules:
 1) Follow the skeleton below exactly — same title, sections, order, and table. Do not add or remove sections.
 2) Assert a decision only if the user explicitly chose/instructed it (implicit-acceptance guardrail). Ambiguous items go in context only.
 3) Never invent facts, numbers, or quotes absent from the tagged source material. If missing, use the skeleton's "not recorded"/"not measured".
-4) Each "why" uses a Y-Statement: "In the context of X, concerned about Y, we chose Z, accepting trade-off W."
-5) Attach source tags (P/A/T/R) in parentheses to verbatim quotes, e.g., ("…" — P1).
-6) Respect length guidance (40–75 words per section; one-liner under 25 words).
+4) **Every number, statistic, proper noun, and result MUST carry a source tag (P/A/T/R). Never write a figure you cannot back with a tag — use "not recorded" instead.** (core anti-hallucination rule)
+5) Each "why" uses a Y-Statement: "In the context of X, concerned about Y, we chose Z, accepting trade-off W."
+6) Attach source tags (P/A/T/R) in parentheses to verbatim quotes, e.g., ("…" — P1).
+7) Write the one-liner in plain language a newcomer understands (under 25 words) — no option letters ((a)/(b)/(c)) or internal jargon.
+8) In "alternatives", use one bullet per alternative: "alternative — chosen/rejected because (source)".
+9) Respect length guidance (40–75 words per section).
 Output only the filled markdown recap. Do not wrap it in a code fence.`,
 };
 
