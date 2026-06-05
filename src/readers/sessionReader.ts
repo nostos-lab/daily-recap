@@ -211,7 +211,7 @@ export function parseLines(lines: string[], opts: ParseOptions): RawMaterial {
   const warnings: string[] = [];
   if (!health.ok) {
     warnings.push(
-      `세션 로그 포맷이 예상과 다릅니다(${health.reasons.join(", ")}). git 폴백 사용을 권장합니다.`
+      `Session log format differs from expected (${health.reasons.join(", ")}). Consider using the git fallback.`
     );
   }
 
@@ -239,10 +239,10 @@ export function assessFormat(stats: ParseStats, opts?: ParseOptions): FormatHeal
   const unknownTypeRatio = stats.parsedLines > 0 ? stats.unknownTypeLines / stats.parsedLines : 0;
   const reasons: string[] = [];
   if (jsonFailureRatio > jsonT) {
-    reasons.push(`JSON 파싱 실패율 ${(jsonFailureRatio * 100).toFixed(1)}%`);
+    reasons.push(`JSON parse failure rate ${(jsonFailureRatio * 100).toFixed(1)}%`);
   }
   if (unknownTypeRatio > unknownT) {
-    reasons.push(`미관측 type 비율 ${(unknownTypeRatio * 100).toFixed(1)}%`);
+    reasons.push(`Unknown type ratio ${(unknownTypeRatio * 100).toFixed(1)}%`);
   }
   return { ok: reasons.length === 0, jsonFailureRatio, unknownTypeRatio, reasons };
 }

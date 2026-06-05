@@ -24,7 +24,7 @@ const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 export function dateParts(date: string): { y: string; m: string; d: string } {
   const m = DATE_RE.exec(date);
   if (!m) {
-    throw new Error(`날짜 형식이 올바르지 않습니다(YYYY-MM-DD): ${date}`);
+    throw new Error(`Invalid date format (expected YYYY-MM-DD): ${date}`);
   }
   return { y: m[1], m: m[2], d: m[3] };
 }
@@ -77,7 +77,7 @@ export class ObsidianSink implements RecapSink {
   private vault: string;
   constructor(vaultPath: string) {
     if (!vaultPath || vaultPath.trim().length === 0) {
-      throw new Error("Obsidian vault 경로(recap.obsidianVault)가 설정되지 않았습니다.");
+      throw new Error("Obsidian vault path (recap.obsidianVault) is not set.");
     }
     this.vault = vaultPath;
   }
@@ -105,8 +105,8 @@ export function makeSink(kind: SinkKind, cfg: SinkConfig): RecapSink {
     case "obsidian":
       return new ObsidianSink(cfg.vaultPath ?? "");
     case "notion":
-      throw new Error("Notion 기록은 아직 구현되지 않았습니다(Phase 6 예정).");
+      throw new Error("Notion recording is not implemented yet.");
     default:
-      throw new Error(`알 수 없는 기록 목적지: ${kind}`);
+      throw new Error(`Unknown recording destination: ${kind}`);
   }
 }

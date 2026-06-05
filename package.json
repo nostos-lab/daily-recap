@@ -1,7 +1,7 @@
 {
   "name": "dailyrecap",
   "displayName": "DailyRecap",
-  "description": "AI 코딩 세션 로그에서 '오늘의 의사결정 recap'을 자동 생성해 Obsidian·로컬 마크다운에 기록하는 BYOK 회고 도구",
+  "description": "Auto-generate today's decision recap from your AI coding session logs and record it to Obsidian / local Markdown. BYOK.",
   "version": "0.0.2",
   "publisher": "nostos-lab",
   "author": "nostos-lab",
@@ -31,12 +31,12 @@
     "commands": [
       {
         "command": "recap.setApiKey",
-        "title": "DailyRecap: API 키 설정",
+        "title": "DailyRecap: Set API Key",
         "category": "DailyRecap"
       },
       {
         "command": "recap.generate",
-        "title": "DailyRecap: recap 생성",
+        "title": "DailyRecap: Generate Recap",
         "category": "DailyRecap"
       }
     ],
@@ -47,51 +47,51 @@
           "type": "string",
           "enum": ["anthropic"],
           "default": "anthropic",
-          "description": "LLM 제공자. v1은 anthropic 고정."
+          "description": "LLM provider. v1 is fixed to anthropic."
         },
         "recap.model": {
           "type": "string",
           "default": "claude-sonnet-4-6",
-          "description": "사용할 Anthropic 모델명. 최신 모델명은 https://docs.claude.com 에서 확인."
+          "description": "Anthropic model to use. Check the latest model names at https://docs.claude.com"
         },
         "recap.source": {
           "type": "string",
           "enum": ["session", "git"],
           "default": "session",
-          "description": "원재료 소스. session(Claude Code 세션 로그) 우선, git 폴백."
+          "description": "Raw-material source. 'session' (Claude Code session logs) preferred, with 'git' fallback."
         },
         "recap.sink": {
           "type": "string",
           "enum": ["local", "obsidian", "notion"],
           "default": "local",
-          "description": "recap 기록 목적지."
+          "description": "Where to record the recap."
         },
         "recap.outputDir": {
           "type": "string",
           "default": "./recaps",
-          "description": "LocalSink 출력 디렉터리."
+          "description": "Output directory for local Markdown recaps."
         },
         "recap.obsidianVault": {
           "type": "string",
           "default": "",
-          "description": "ObsidianSink 대상 vault 절대경로."
+          "description": "Absolute path to the Obsidian vault."
         },
         "recap.lang": {
           "type": "string",
           "enum": ["auto", "ko", "en"],
           "default": "auto",
-          "description": "recap 출력 언어. auto는 IDE 로케일을 따름."
+          "description": "Recap output language. 'auto' follows the editor locale."
         },
         "recap.gitEnrich": {
           "type": "string",
           "enum": ["always", "auto", "off"],
           "default": "always",
           "enumDescriptions": [
-            "커밋이 있으면 항상 보강",
-            "세션 자체의 결과 신호(변경 파일·도구 결과)가 빈약할 때만 보강",
-            "보강하지 않음"
+            "Always enrich when commits exist",
+            "Enrich only when the session's own result signal (changed files / tool results) is weak",
+            "Do not enrich"
           ],
-          "description": "session recap의 '결과' 축을 같은 날짜 git 커밋·변경 파일로 보강하는 방식."
+          "description": "How to enrich the recap's \"result\" axis with the same day's git commits and changed files."
         }
       }
     }
