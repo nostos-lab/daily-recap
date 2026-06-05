@@ -11,14 +11,17 @@ v1은 "마찰 거의 0으로 매일 의사결정 회고가 쌓이게 한다"는 
 
 **근거**: commit-story 등 동종 도구가 git 커밋을 보는 이유가 곧 "실제 반영된 변화 = 결과"이기 때문. 세션(과정)과 git(결과)은 상보 관계다.
 
+### ✅ 외부 멀티 프로바이더 (OpenAI / Gemini / Grok) — 구현됨
+OpenAI 호환 어댑터 1개(`OpenAICompatProvider`, baseURL·모델만 다름)로 OpenAI·Google Gemini·xAI Grok을 모두 커버. Grok은 `https://api.x.ai/v1`, Gemini는 `https://generativelanguage.googleapis.com/v1beta/openai`의 OpenAI 호환 레이어 사용. Citations는 Anthropic 전용이라 외부 모델은 인라인 추출 경로(`useCitations:false`)로 라우팅. 키는 프로바이더별 슬롯(`recap.apiKey.<provider>`)에 저장하고, `recap.provider`로 명시 선택(자동 감지 없음).
+
 ### ② 사후 grounding 검증기 (provider 무관)
 생성된 recap의 모든 수치·verbatim 인용을 원재료와 자동 대조해, 출처에 없는 항목을 플래그/제거한다. 모델에 의존하지 않으므로 Anthropic·Ollama 어디서나 신뢰를 끌어올린다. 사실·인용 레이어를 사실상 하드 보장 수준으로 만든다.
 
 ### ③ Ollama(로컬) 프로바이더
-무료·로컬·오프라인 옵션. `OllamaProvider`를 OpenAI 호환 엔드포인트(`/v1/chat/completions`, SSE)로 구현하고 추출은 비‑Citations 폴백 경로로 라우팅한다. 인터페이스·stub·폴백 경로는 v1에 이미 마련됨.
+무료·로컬·오프라인 옵션. Ollama도 OpenAI 호환 엔드포인트(`http://localhost:11434/v1`)를 제공하므로 이미 구현된 `OpenAICompatProvider`를 키 없이(또는 더미 키) baseURL만 바꿔 재사용하면 거의 끝난다. 남은 건 로컬 서버 미기동 시 에러 안내·모델 기본값 처리 정도.
 - 트레이드오프: Citations 미지원으로 출처 근거 약화, 로컬 모델은 anti‑hallucination·Y‑Statement 준수가 약함. → ②의 검증기가 안전망으로 함께 필요.
 
 ## 범위 밖(현행 유지)
 외부 발행(dev.to/블로그/SNS), 유료·플랫폼화, Notion 읽기 연동, 백엔드/서버, 다중 모델 오케스트레이션, 팀/협업, Cursor 등 타 에이전트 로그(폴백은 git까지). — PRD §7 동결.
 
-_업데이트: 2026-06-04_
+_업데이트: 2026-06-05_

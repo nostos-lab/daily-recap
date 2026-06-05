@@ -8,7 +8,7 @@ import { readSessionFiles, listAvailableSessionDates } from "./readers/sessionRe
 import { readGitCommits, makeGitRunner, listAvailableGitDates, mergeGitResult, shouldEnrich, type GitEnrichMode } from "./readers/gitReader";
 import { resolveLang, type Lang } from "./prompts/recap-template";
 import { runRecap, prepareInputs } from "./llm/recapRunner";
-import { getProvider } from "./llm/providers";
+import { getProvider, providerUsesCitations, PROVIDERS } from "./llm/providers";
 import { LLMError } from "./llm/errors";
 import { makeSink, type SinkKind } from "./sinks";
 import { renderMarkdown, getWebviewHtml } from "./preview/render";
@@ -27,12 +27,31 @@ export function deactivate() {
 
 /* ── recap.setApiKey ── */
 async function setApiKey(secrets: SecretsStore): Promise<void> {
+  // 1) which provider's key are we setting?
+  const active = vscode.workspace.getConfiguration("recap").get<string>("provider") || "anthropic";
+  const ordered = Object.values(PROVIDERS).sort((a, b) =>
+    a.id === active ? -1 : b.id === active ? 1 : 0
+  );
+  const picked = await vscode.window.showQuickPick(
+    ordered.map((m) => ({
+      label: m.label,
+      description: m.id === active ? "Current provider (recap.provider)" : undefined,
+      id: m.id,
+    })),
+    { placeHolder: "Set the API key for which provider?" }
+  );
+  if (!picked) {
+    return;
+  }
+  const meta = PROVIDERS[picked.id];
+
+  // 2) enter the key
   const value = await vscode.window.showInputBox({
-    title: "DailyRecap — Anthropic API Key",
+    title: `DailyRecap — ${meta.label} API Key`,
     prompt: "Your API key is stored only in VS Code SecretStorage — never in settings or logs as plain text.",
     password: true,
     ignoreFocusOut: true,
-    placeHolder: "sk-ant-...",
+    placeHolder: meta.keyPlaceholder,
   });
   if (value === undefined) {
     return;
@@ -42,8 +61,9 @@ async function setApiKey(secrets: SecretsStore): Promise<void> {
     vscode.window.showWarningMessage("DailyRecap: Empty value was not saved.");
     return;
   }
-  await secrets.setApiKey(trimmed);
-  vscode.window.showInformationMessage("DailyRecap: API key saved.");
+  await secrets.setApiKey(meta.id, trimmed);
+  const hint = meta.id === active ? "" : ` (set recap.provider to "${meta.id}" to use it)`;
+  vscode.window.showInformationMessage(`DailyRecap: ${meta.label} API key saved.${hint}`);
 }
 
 /* ── recap.generate (full flow) ── */
@@ -69,10 +89,15 @@ async function safeGenerate(secrets: SecretsStore): Promise<void> {
 async function generate(secrets: SecretsStore): Promise<void> {
   const cfg = vscode.workspace.getConfiguration("recap");
 
-  // 1) check API key
-  const apiKey = await secrets.getApiKey();
+  // 1) check API key for the active provider
+  const providerId = cfg.get<string>("provider") || "anthropic";
+  const apiKey = await secrets.getApiKey(providerId);
   if (!apiKey) {
-    const c = await vscode.window.showInformationMessage("DailyRecap: Please set your API key first.", "Set API Key");
+    const meta = PROVIDERS[providerId];
+    const c = await vscode.window.showInformationMessage(
+      `DailyRecap: Please set your ${meta?.label ?? providerId} API key first.`,
+      "Set API Key"
+    );
     if (c === "Set API Key") {
       await vscode.commands.executeCommand("recap.setApiKey");
     }
@@ -207,7 +232,9 @@ async function generate(secrets: SecretsStore): Promise<void> {
   // 6) LLM call (progress bar, streaming is status message — PRD §6.5 fallback)
   const lang: Lang = resolveLang(cfg.get<string>("lang"), vscode.env.language);
   const model = cfg.get<string>("model") || "claude-sonnet-4-6";
-  const provider = getProvider({ provider: cfg.get<string>("provider") || "anthropic", apiKey });
+  const baseUrl = cfg.get<string>("baseUrl") || undefined;
+  const provider = getProvider({ provider: providerId, apiKey, baseUrl });
+  const useCitations = providerUsesCitations(providerId);
 
   const result = await vscode.window.withProgress(
     { location: vscode.ProgressLocation.Notification, title: "DailyRecap: generating recap", cancellable: true },
@@ -218,6 +245,7 @@ async function generate(secrets: SecretsStore): Promise<void> {
       return runRecap(provider, rm!, {
         model,
         lang,
+        useCitations,
         signal: controller.signal,
         onDelta: (t) => {
           chars += t.length;

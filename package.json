@@ -45,14 +45,26 @@
       "properties": {
         "recap.provider": {
           "type": "string",
-          "enum": ["anthropic"],
+          "enum": ["anthropic", "openai", "gemini", "grok", "ollama"],
           "default": "anthropic",
-          "description": "LLM provider. v1 is fixed to anthropic."
+          "enumDescriptions": [
+            "Anthropic (Claude) — native Citations API for grounded extraction",
+            "OpenAI (GPT) — OpenAI-compatible endpoint",
+            "Google Gemini — OpenAI-compatible endpoint",
+            "xAI (Grok) — OpenAI-compatible endpoint",
+            "Ollama (local) — not implemented yet"
+          ],
+          "description": "LLM provider. Set its API key via 'DailyRecap: Set API Key'. Non-Anthropic providers use inline extraction (no Citations API)."
         },
         "recap.model": {
           "type": "string",
           "default": "claude-sonnet-4-6",
-          "description": "Anthropic model to use. Check the latest model names at https://docs.claude.com"
+          "description": "Model to use for the active provider (e.g. claude-sonnet-4-6, gpt-4o, gemini-2.5-pro, grok-4). Check each provider's docs for current model names."
+        },
+        "recap.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Override the API base URL for OpenAI-compatible providers (openai/gemini/grok). Leave empty to use the provider default."
         },
         "recap.source": {
           "type": "string",
@@ -62,7 +74,7 @@
         },
         "recap.sink": {
           "type": "string",
-          "enum": ["local", "obsidian", "notion"],
+          "enum": ["local", "obsidian"],
           "default": "local",
           "description": "Where to record the recap."
         },

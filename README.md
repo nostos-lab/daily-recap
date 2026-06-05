@@ -22,12 +22,12 @@ Retrospectives are valuable but rarely happen, because writing them is friction.
 ## Requirements
 
 - VS Code 1.85+ (or Cursor / other VS Code-compatible editors)
-- An [Anthropic API key](https://console.anthropic.com/account/keys) with usage credit (billed separately from any subscription)
+- An API key for one supported provider — Anthropic (default), OpenAI, Google Gemini, or xAI Grok — with usage credit (billed separately from any subscription)
 - Node.js 18+ is only needed if you build the extension from source
 
 ## Getting Started
 
-1. Open the Command Palette (`Cmd/Ctrl+Shift+P`) → **DailyRecap: Set API Key** and paste your Anthropic key (stored in SecretStorage).
+1. Open the Command Palette (`Cmd/Ctrl+Shift+P`) → **DailyRecap: Set API Key**, choose your provider, and paste its key (stored in SecretStorage). To switch providers later, change `recap.provider` — each provider keeps its own key.
 2. Run **DailyRecap: Generate Recap**.
 3. Pick a project → a date (dates that actually have logs are listed first) → confirm.
 4. Review the preview, then choose where to save it (Local Markdown or Obsidian).
@@ -45,8 +45,9 @@ No Claude Code logs for that day? DailyRecap offers to build the recap from that
 
 | Setting | Default | Description |
 |---|---|---|
-| `recap.provider` | `anthropic` | LLM provider (v1 is fixed to `anthropic`). |
-| `recap.model` | `claude-sonnet-4-6` | Anthropic model to use. |
+| `recap.provider` | `anthropic` | LLM provider: `anthropic`, `openai`, `gemini`, `grok` (or `ollama`, planned). Each provider has its own stored key. |
+| `recap.model` | `claude-sonnet-4-6` | Model for the active provider (e.g. `claude-sonnet-4-6`, `gpt-4o`, `gemini-2.5-pro`, `grok-4`). |
+| `recap.baseUrl` | _(unset)_ | Override the base URL for OpenAI-compatible providers (openai/gemini/grok); leave empty for the provider default. |
 | `recap.source` | `session` | Raw-material source: `session` (Claude Code logs) or `git`. |
 | `recap.sink` | `local` | Where to record: `local` or `obsidian`. |
 | `recap.outputDir` | `./recaps` | Output directory for local Markdown. |
@@ -58,7 +59,7 @@ Recording paths — Local: `<outputDir>/YYYY/MM/DD-recap.md`, Obsidian: `<vault>
 
 ## How it works
 
-DailyRecap makes a two-stage LLM call: (1) it uses the Citations API to extract decisions, quotes, and numbers from the tagged source material, then (2) generates the topic-segmented recap from that. The two stages are separate because Citations and Structured Outputs can't be combined in one call.
+DailyRecap makes a two-stage LLM call: (1) it extracts decisions, quotes, and numbers from the tagged source material, then (2) generates the topic-segmented recap from that. With Anthropic, stage 1 uses the Citations API for stronger grounding; OpenAI-compatible providers (OpenAI/Gemini/Grok) use an inline text-extraction path instead. The two stages are separate because Citations and Structured Outputs can't be combined in one call.
 
 ## Privacy & Security
 
@@ -68,7 +69,7 @@ Your API key is stored only in the editor's secret storage (e.g. macOS Keychain)
 
 - Auto-matching a workspace to its `~/.claude/projects` folder can fail when the folder-name encoding differs across Claude Code versions — pick the project manually from the list when that happens.
 - The "why" reconstructed from git-only days is only as good as your commit messages.
-- Provider support is Anthropic-only in v1 (OpenAI/Ollama are planned).
+- Anthropic is the only provider with the native Citations API; OpenAI/Gemini/Grok run through an inline extraction path instead, so their "grounding" is slightly weaker. Ollama (local) is planned.
 
 ## Contributing
 

@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+- 외부 멀티 프로바이더 지원: OpenAI 호환 어댑터 1개로 **OpenAI·Google Gemini·xAI Grok** 커버(설정 `recap.provider`, 필요 시 `recap.baseUrl`로 엔드포인트 오버라이드). Citations API는 Anthropic 전용이라 외부 모델은 인라인 추출 경로 사용.
+- 프로바이더별 키 슬롯: `recap.apiKey.<provider>`로 각 프로바이더 키를 따로 저장. `Set API Key`가 어느 프로바이더 키인지 먼저 묻고 해당 슬롯에 저장(키 자동 감지 없음). 기존 단일 anthropic 키는 첫 사용 시 자동 마이그레이션.
+
 ### Changed
 - UI 영문화: 명령 이름·설정 설명·알림/QuickPick·마켓플레이스 설명을 영어로 통일(글로벌 발견·설치 대비). recap 출력 언어는 `recap.lang`이 별도로 제어.
 - 일일 recap 포맷을 **주제별 섹션**으로: 하루를 응집된 작업 주제(예: 회원가입/UI/백엔드)로 나눠 주제마다 4축 섹션을 생성(단일 호출, raw에서 1회 정제 — 이중 정제 손실 없음). 주제 지어내기 금지·모호 시 병합 가드레일.

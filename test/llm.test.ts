@@ -8,7 +8,8 @@ import { fileURLToPath } from "node:url";
 import { estimateTokens, enforceBudget } from "../src/llm/budget.ts";
 import { LLMError, fromStatus, fromNetwork } from "../src/llm/errors.ts";
 import { AnthropicProvider } from "../src/llm/anthropic.ts";
-import { getProvider } from "../src/llm/providers.ts";
+import { OpenAICompatProvider } from "../src/llm/openaiCompat.ts";
+import { getProvider, providerUsesCitations } from "../src/llm/providers.ts";
 import { runRecap } from "../src/llm/recapRunner.ts";
 import { parseLines } from "../src/readers/sessionReader.ts";
 
@@ -123,15 +124,55 @@ try {
 }
 check("401 응답→LLMError auth", threw instanceof LLMError && threw.kind === "auth");
 
+console.log("\n[OpenAICompatProvider.complete]");
+const ocCalls: any[] = [];
+const ocCompleteFetch = async (url: string, init: any) => {
+  ocCalls.push({ url, init });
+  return {
+    ok: true,
+    json: async () => ({
+      choices: [{ message: { content: '{"decisions":[]}' }, finish_reason: "stop" }],
+      usage: { prompt_tokens: 11, completion_tokens: 6 },
+    }),
+  };
+};
+const oc = new OpenAICompatProvider({ name: "openai", apiKey: "secret-key", baseUrl: "https://api.openai.com/v1", fetchImpl: ocCompleteFetch });
+const ocres = await oc.complete({ model: "gpt-x", system: "s", maxTokens: 100, messages: [{ role: "user", content: "hi" }] });
+check("complete 텍스트 추출", ocres.text === '{"decisions":[]}');
+check("citations 없음(외부 모델)", ocres.citations.length === 0);
+check("엔드포인트 /chat/completions", String(ocCalls[0].url).endsWith("/chat/completions"));
+check("Authorization Bearer 헤더", ocCalls[0].init.headers["authorization"] === "Bearer secret-key");
+check("body: system이 첫 메시지로", (() => { const b = JSON.parse(ocCalls[0].init.body); return b.messages[0].role === "system" && b.messages[1].role === "user" && b.stream === false; })());
+check("usage 매핑(prompt/completion)", ocres.usage?.input === 11 && ocres.usage?.output === 6, ocres.usage);
+
+console.log("\n[OpenAICompatProvider.stream]");
+const ocStreamFetch = async (_url: string, _init: any) =>
+  sseResponse([
+    { choices: [{ delta: { content: "Hello " } }] },
+    { choices: [{ delta: { content: "world" } }] },
+    { choices: [{ delta: {}, finish_reason: "stop" }] },
+  ]);
+const ocs = new OpenAICompatProvider({ name: "grok", apiKey: "k", baseUrl: "https://api.x.ai/v1/", fetchImpl: ocStreamFetch });
+let ocAcc = "";
+const ocsres = await ocs.stream({ model: "grok-4", system: "s", maxTokens: 100, messages: [{ role: "user", content: "hi" }] }, (t) => (ocAcc += t));
+check("delta 누적", ocAcc === "Hello world", ocAcc);
+check("stream 최종 텍스트", ocsres.text === "Hello world");
+check("finish_reason 파싱", ocsres.stopReason === "stop");
+check("baseUrl 후행 슬래시 정규화", ocs.name === "grok");
+
 console.log("\n[providers 팩토리]");
 check("anthropic 생성", getProvider({ provider: "anthropic", apiKey: "k", fetchImpl: completeFetch }).name === "anthropic");
-let stubThrew: any;
+check("openai compat 생성", getProvider({ provider: "openai", apiKey: "k", fetchImpl: completeFetch }).name === "openai");
+check("grok compat 생성", getProvider({ provider: "grok", apiKey: "k", fetchImpl: completeFetch }).name === "grok");
+check("gemini compat 생성", getProvider({ provider: "gemini", apiKey: "k", fetchImpl: completeFetch }).name === "gemini");
+check("useCitations: anthropic만 true", providerUsesCitations("anthropic") === true && providerUsesCitations("openai") === false && providerUsesCitations("grok") === false);
+let ollamaThrew: any;
 try {
-  await getProvider({ provider: "openai", apiKey: "" }).complete({ model: "m", system: "", maxTokens: 1, messages: [] });
+  await getProvider({ provider: "ollama", apiKey: "" }).complete({ model: "m", system: "", maxTokens: 1, messages: [] });
 } catch (e) {
-  stubThrew = e;
+  ollamaThrew = e;
 }
-check("openai stub→NotImplemented", stubThrew instanceof LLMError);
+check("ollama stub→NotImplemented", ollamaThrew instanceof LLMError);
 let unknownThrew = false;
 try {
   getProvider({ provider: "xyz", apiKey: "" });
