@@ -45,7 +45,7 @@ No Claude Code logs for that day? DailyRecap offers to build the recap from that
 
 | Setting | Default | Description |
 |---|---|---|
-| `recap.provider` | `anthropic` | LLM provider: `anthropic`, `openai`, `gemini`, `grok` (or `ollama`, planned). Each provider has its own stored key. |
+| `recap.provider` | `anthropic` | LLM provider: `anthropic`, `openai`, `gemini`, `grok`, or `ollama` (local, no key). Each cloud provider keeps its own stored key. |
 | `recap.model` | `claude-sonnet-4-6` | Model for the active provider (e.g. `claude-sonnet-4-6`, `gpt-4o`, `gemini-2.5-pro`, `grok-4`). |
 | `recap.baseUrl` | _(unset)_ | Override the base URL for OpenAI-compatible providers (openai/gemini/grok); leave empty for the provider default. |
 | `recap.source` | `session` | Raw-material source: `session` (Claude Code logs) or `git`. |
@@ -69,7 +69,7 @@ Your API key is stored only in the editor's secret storage (e.g. macOS Keychain)
 
 - Auto-matching a workspace to its `~/.claude/projects` folder can fail when the folder-name encoding differs across Claude Code versions — pick the project manually from the list when that happens.
 - The "why" reconstructed from git-only days is only as good as your commit messages.
-- Anthropic is the only provider with the native Citations API; OpenAI/Gemini/Grok run through an inline extraction path instead, so their "grounding" is slightly weaker. Ollama (local) is planned.
+- Anthropic is the only provider with the native Citations API; OpenAI/Gemini/Grok and local Ollama run through an inline extraction path instead, so their "grounding" is slightly weaker (local models most of all).
 
 ## Contributing
 

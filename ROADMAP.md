@@ -17,8 +17,9 @@ OpenAI 호환 어댑터 1개(`OpenAICompatProvider`, baseURL·모델만 다름)�
 ### ② 사후 grounding 검증기 (provider 무관)
 생성된 recap의 모든 수치·verbatim 인용을 원재료와 자동 대조해, 출처에 없는 항목을 플래그/제거한다. 모델에 의존하지 않으므로 Anthropic·Ollama 어디서나 신뢰를 끌어올린다. 사실·인용 레이어를 사실상 하드 보장 수준으로 만든다.
 
-### ③ Ollama(로컬) 프로바이더
-무료·로컬·오프라인 옵션. Ollama도 OpenAI 호환 엔드포인트(`http://localhost:11434/v1`)를 제공하므로 이미 구현된 `OpenAICompatProvider`를 키 없이(또는 더미 키) baseURL만 바꿔 재사용하면 거의 끝난다. 남은 건 로컬 서버 미기동 시 에러 안내·모델 기본값 처리 정도.
+### ✅ Ollama(로컬) 프로바이더 — 구현됨
+무료·로컬·오프라인 옵션. `OpenAICompatProvider`를 `http://localhost:11434/v1`로 재사용(키 불필요, 더미 Bearer 자동 주입). 서버 미기동 시 `ollama serve`·모델 pull 안내 메시지 포함.
+- 남은 트레이드오프: Citations 미지원 + 로컬 모델은 anti‑hallucination·Y‑Statement 준수가 약함 → ②의 grounding 검증기가 안전망으로 함께 필요.
 - 트레이드오프: Citations 미지원으로 출처 근거 약화, 로컬 모델은 anti‑hallucination·Y‑Statement 준수가 약함. → ②의 검증기가 안전망으로 함께 필요.
 
 ## 범위 밖(현행 유지)

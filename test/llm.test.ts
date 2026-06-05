@@ -165,14 +165,26 @@ check("anthropic 생성", getProvider({ provider: "anthropic", apiKey: "k", fetc
 check("openai compat 생성", getProvider({ provider: "openai", apiKey: "k", fetchImpl: completeFetch }).name === "openai");
 check("grok compat 생성", getProvider({ provider: "grok", apiKey: "k", fetchImpl: completeFetch }).name === "grok");
 check("gemini compat 생성", getProvider({ provider: "gemini", apiKey: "k", fetchImpl: completeFetch }).name === "gemini");
-check("useCitations: anthropic만 true", providerUsesCitations("anthropic") === true && providerUsesCitations("openai") === false && providerUsesCitations("grok") === false);
-let ollamaThrew: any;
+check("ollama compat 생성(키 없이)", getProvider({ provider: "ollama", apiKey: "", fetchImpl: completeFetch }).name === "ollama");
+check("useCitations: anthropic만 true", providerUsesCitations("anthropic") === true && providerUsesCitations("openai") === false && providerUsesCitations("ollama") === false);
+
+// ollama: keyless → dummy bearer, localhost base, connection hint on network failure
+const ollamaCalls: any[] = [];
+const ollamaFetch = async (url: string, init: any) => {
+  ollamaCalls.push({ url, init });
+  return { ok: true, json: async () => ({ choices: [{ message: { content: "ok" }, finish_reason: "stop" }] }) };
+};
+await getProvider({ provider: "ollama", apiKey: "", fetchImpl: ollamaFetch }).complete({ model: "llama3.1", system: "s", maxTokens: 10, messages: [{ role: "user", content: "x" }] });
+check("ollama 기본 baseURL(localhost:11434)", String(ollamaCalls[0].url) === "http://localhost:11434/v1/chat/completions", ollamaCalls[0].url);
+check("ollama 더미 Bearer 주입", ollamaCalls[0].init.headers["authorization"] === "Bearer ollama");
+let ollamaNetThrew: any;
 try {
-  await getProvider({ provider: "ollama", apiKey: "" }).complete({ model: "m", system: "", maxTokens: 1, messages: [] });
-} catch (e) {
-  ollamaThrew = e;
-}
-check("ollama stub→NotImplemented", ollamaThrew instanceof LLMError);
+  await getProvider({ provider: "ollama", apiKey: "", fetchImpl: async () => { throw new Error("ECONNREFUSED"); } }).complete({
+    model: "llama3.1", system: "", maxTokens: 1, messages: [{ role: "user", content: "x" }],
+  });
+} catch (e) { ollamaNetThrew = e; }
+check("ollama 서버 미기동→network + 안내", ollamaNetThrew instanceof LLMError && ollamaNetThrew.kind === "network" && /Ollama running/.test(ollamaNetThrew.message), ollamaNetThrew?.message);
+
 let unknownThrew = false;
 try {
   getProvider({ provider: "xyz", apiKey: "" });

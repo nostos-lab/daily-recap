@@ -1,4 +1,4 @@
-import type { ChatRequest, ChatResult, LLMProvider } from "./types";
+import type { LLMProvider } from "./types";
 import { LLMError } from "./errors";
 import { AnthropicProvider } from "./anthropic";
 import { OpenAICompatProvider } from "./openaiCompat";
@@ -6,9 +6,9 @@ import { OpenAICompatProvider } from "./openaiCompat";
 /**
  * provider factory.
  * - anthropic: native Messages API (Citations supported).
- * - openai / grok / gemini: one OpenAI-compatible adapter, only baseUrl/model differ.
- *   They have no Citations API → the recap runner uses the inline extraction path.
- * - ollama: local provider, NotImplemented stub (planned).
+ * - openai / grok / gemini / ollama: one OpenAI-compatible adapter, only
+ *   baseUrl/model differ. They have no Citations API → the recap runner uses
+ *   the inline extraction path. Ollama is local and needs no API key.
  */
 
 export interface ProviderMeta {
@@ -58,27 +58,19 @@ export const PROVIDERS: Record<string, ProviderMeta> = {
     needsKey: true,
     useCitations: false,
   },
+  ollama: {
+    id: "ollama",
+    label: "Ollama (local)",
+    keyPlaceholder: "",
+    defaultBaseUrl: "http://localhost:11434/v1",
+    needsKey: false,
+    useCitations: false,
+  },
 };
 
 /** does the given provider use the native Citations extraction path? */
 export function providerUsesCitations(provider: string): boolean {
   return PROVIDERS[provider]?.useCitations ?? false;
-}
-
-class NotImplementedProvider implements LLMProvider {
-  readonly name: string;
-  constructor(name: string) {
-    this.name = name;
-  }
-  private fail(): never {
-    throw new LLMError("unknown", `${this.name} provider is not implemented yet (planned).`);
-  }
-  async complete(_req: ChatRequest): Promise<ChatResult> {
-    this.fail();
-  }
-  async stream(_req: ChatRequest, _onDelta: (chunk: string) => void): Promise<ChatResult> {
-    this.fail();
-  }
 }
 
 export interface ProviderConfig {
@@ -95,12 +87,17 @@ export function getProvider(cfg: ProviderConfig): LLMProvider {
       return new AnthropicProvider({ apiKey: cfg.apiKey, fetchImpl: cfg.fetchImpl, baseUrl: cfg.baseUrl });
     case "openai":
     case "grok":
-    case "gemini": {
+    case "gemini":
+    case "ollama": {
       const baseUrl = cfg.baseUrl || PROVIDERS[cfg.provider].defaultBaseUrl!;
-      return new OpenAICompatProvider({ name: cfg.provider, apiKey: cfg.apiKey, baseUrl, fetchImpl: cfg.fetchImpl });
+      // local Ollama needs no key; send a dummy bearer it ignores.
+      const apiKey = cfg.provider === "ollama" ? cfg.apiKey || "ollama" : cfg.apiKey;
+      const connectionHint =
+        cfg.provider === "ollama"
+          ? "Is Ollama running? Start it (`ollama serve`) and pull a model (e.g. `ollama pull llama3.1`)."
+          : undefined;
+      return new OpenAICompatProvider({ name: cfg.provider, apiKey, baseUrl, fetchImpl: cfg.fetchImpl, connectionHint });
     }
-    case "ollama":
-      return new NotImplementedProvider("ollama");
     default:
       throw new LLMError("unknown", `unknown provider: ${cfg.provider}`);
   }

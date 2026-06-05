@@ -10,6 +10,8 @@ export interface OpenAICompatOptions {
   /** base URL WITHOUT the trailing /chat/completions (e.g. https://api.openai.com/v1). */
   baseUrl: string;
   fetchImpl?: FetchLike;
+  /** appended to the network-error message (e.g. "Is Ollama running?"). */
+  connectionHint?: string;
 }
 
 /**
@@ -27,11 +29,13 @@ export class OpenAICompatProvider implements LLMProvider {
   private apiKey: string;
   private baseUrl: string;
   private fetchImpl: FetchLike;
+  private connectionHint?: string;
 
   constructor(opts: OpenAICompatOptions) {
     this.name = opts.name;
     this.apiKey = opts.apiKey;
     this.baseUrl = opts.baseUrl.replace(/\/+$/, "");
+    this.connectionHint = opts.connectionHint;
     this.fetchImpl = opts.fetchImpl ?? ((globalThis as any).fetch as FetchLike);
     if (!this.fetchImpl) {
       throw new LLMError("unknown", "fetch is not available (Node 18+ or injection required).");
@@ -83,7 +87,11 @@ export class OpenAICompatProvider implements LLMProvider {
         signal: req.signal,
       });
     } catch (e) {
-      throw fromNetwork(e);
+      const err = fromNetwork(e);
+      if (this.connectionHint) {
+        err.message = `${err.message} ${this.connectionHint}`;
+      }
+      throw err;
     }
     if (!res.ok) {
       let text = "";

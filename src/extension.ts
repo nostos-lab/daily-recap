@@ -29,9 +29,9 @@ export function deactivate() {
 async function setApiKey(secrets: SecretsStore): Promise<void> {
   // 1) which provider's key are we setting?
   const active = vscode.workspace.getConfiguration("recap").get<string>("provider") || "anthropic";
-  const ordered = Object.values(PROVIDERS).sort((a, b) =>
-    a.id === active ? -1 : b.id === active ? 1 : 0
-  );
+  const ordered = Object.values(PROVIDERS)
+    .filter((m) => m.needsKey)
+    .sort((a, b) => (a.id === active ? -1 : b.id === active ? 1 : 0));
   const picked = await vscode.window.showQuickPick(
     ordered.map((m) => ({
       label: m.label,
@@ -89,10 +89,11 @@ async function safeGenerate(secrets: SecretsStore): Promise<void> {
 async function generate(secrets: SecretsStore): Promise<void> {
   const cfg = vscode.workspace.getConfiguration("recap");
 
-  // 1) check API key for the active provider
+  // 1) check API key for the active provider (local providers like Ollama need none)
   const providerId = cfg.get<string>("provider") || "anthropic";
+  const needsKey = PROVIDERS[providerId]?.needsKey !== false;
   const apiKey = await secrets.getApiKey(providerId);
-  if (!apiKey) {
+  if (needsKey && !apiKey) {
     const meta = PROVIDERS[providerId];
     const c = await vscode.window.showInformationMessage(
       `DailyRecap: Please set your ${meta?.label ?? providerId} API key first.`,
@@ -233,7 +234,7 @@ async function generate(secrets: SecretsStore): Promise<void> {
   const lang: Lang = resolveLang(cfg.get<string>("lang"), vscode.env.language);
   const model = cfg.get<string>("model") || "claude-sonnet-4-6";
   const baseUrl = cfg.get<string>("baseUrl") || undefined;
-  const provider = getProvider({ provider: providerId, apiKey, baseUrl });
+  const provider = getProvider({ provider: providerId, apiKey: apiKey ?? "", baseUrl });
   const useCitations = providerUsesCitations(providerId);
 
   const result = await vscode.window.withProgress(
