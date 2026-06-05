@@ -17,22 +17,69 @@ Retrospectives are valuable but rarely happen, because writing them is friction.
 - **Fuses in git results.** The same day's commits and changed files are pulled in as ground-truth evidence for the "result" of each decision.
 - **Grounded, not hallucinated.** Facts and numbers must trace to a source; only choices you explicitly made are stated as decisions; quotes carry citations.
 - **Writes where you already work.** Appends to local Markdown or an Obsidian vault, organized by date.
-- **Bring your own key (BYOK).** Your API key lives only in the editor's secret storage; calls go directly to Anthropic — never through our servers.
+- **Your choice of model, your key (BYOK).** Use Anthropic, OpenAI, Gemini, Grok, or a local Ollama model. Cloud keys live only in the editor's secret storage and calls go directly to the provider — never through our servers. Ollama runs entirely on your machine.
 
 ## Requirements
 
 - VS Code 1.85+ (or Cursor / other VS Code-compatible editors)
-- An API key for one supported provider — Anthropic (default), OpenAI, Google Gemini, or xAI Grok — with usage credit (billed separately from any subscription)
+- A model to generate with — either:
+  - an API key for a supported cloud provider (Anthropic, OpenAI, Google Gemini, or xAI Grok), with usage credit billed by that provider, **or**
+  - a local [Ollama](https://ollama.com) install (free, offline, no key)
 - Node.js 18+ is only needed if you build the extension from source
 
 ## Getting Started
 
-1. Open the Command Palette (`Cmd/Ctrl+Shift+P`) → **DailyRecap: Set API Key**, choose your provider, and paste its key (stored in SecretStorage). To switch providers later, change `recap.provider` — each provider keeps its own key.
-2. Run **DailyRecap: Generate Recap**.
-3. Pick a project → a date (dates that actually have logs are listed first) → confirm.
-4. Review the preview, then choose where to save it (Local Markdown or Obsidian).
+1. Pick a provider (see [Providers](#providers)). The default is Anthropic.
+2. **Cloud provider:** open the Command Palette (`Cmd/Ctrl+Shift+P`) → **DailyRecap: Set API Key**, choose the provider, and paste its key (stored in SecretStorage).
+   **Ollama (local):** no key — just set `recap.provider` to `ollama` and `recap.model` to a local tag (see [Using Ollama](#using-ollama-local)).
+3. Run **DailyRecap: Generate Recap**.
+4. Pick a project → a date (dates that actually have logs are listed first) → confirm.
+5. Review the preview, then choose where to save it (Local Markdown or Obsidian).
 
 No Claude Code logs for that day? DailyRecap offers to build the recap from that day's **git commits** instead.
+
+## Providers
+
+DailyRecap is BYOK and provider-agnostic. Choose one via the `recap.provider` setting and set its model in `recap.model`.
+
+| Provider | `recap.provider` | API key | Default base URL | Example `recap.model` |
+|---|---|---|---|---|
+| Anthropic (Claude) | `anthropic` | required | `https://api.anthropic.com` | `claude-sonnet-4-6` |
+| OpenAI (GPT) | `openai` | required | `https://api.openai.com/v1` | `gpt-4o` |
+| Google Gemini | `gemini` | required | `https://generativelanguage.googleapis.com/v1beta/openai` | `gemini-2.5-pro` |
+| xAI (Grok) | `grok` | required | `https://api.x.ai/v1` | `grok-4` |
+| Ollama (local) | `ollama` | none | `http://localhost:11434/v1` | `llama3.1` |
+
+Model names above are examples — check each provider's docs for current names.
+
+**Grounding note.** Anthropic uses the native **Citations API** to tie extracted facts and quotes back to your source material. OpenAI, Gemini, Grok, and Ollama have no Citations API, so they run through an inline text-extraction path instead — recaps still work, but their grounding is slightly weaker (local models most of all).
+
+### Managing keys
+
+Each cloud provider has its own key slot, so you can store several and switch between them by changing `recap.provider` — DailyRecap never has to guess which key is which.
+
+- **DailyRecap: Set API Key** — pick a provider and store/replace its key.
+- **DailyRecap: Manage API Keys** — see which providers have a key stored (● stored / ○ none), set/replace by selecting a row, or delete with the trash icon. (Ollama isn't listed because it has no key.)
+
+Keys are stored only in the editor's secret storage (e.g. macOS Keychain) — never in `settings.json`, logs, or any server.
+
+### Using Ollama (local)
+
+Ollama needs no API key; it's configured entirely through settings.
+
+1. Install Ollama from [ollama.com](https://ollama.com) and start it (`ollama serve`).
+2. Pull a model, e.g. `ollama pull llama3.1` (or `qwen2.5-coder`, etc.).
+3. In VS Code settings (`settings.json` or the Settings UI):
+
+   ```jsonc
+   {
+     "recap.provider": "ollama",
+     "recap.model": "llama3.1",            // must match a model you've pulled
+     "recap.baseUrl": ""                    // empty → http://localhost:11434/v1
+   }
+   ```
+
+> ⚠️ When switching to Ollama, remember to change `recap.model` — the default (`claude-sonnet-4-6`) is an Anthropic model and won't exist locally. If the local server isn't running, DailyRecap will tell you to start it.
 
 ## Commands
 
@@ -46,9 +93,9 @@ No Claude Code logs for that day? DailyRecap offers to build the recap from that
 
 | Setting | Default | Description |
 |---|---|---|
-| `recap.provider` | `anthropic` | LLM provider: `anthropic`, `openai`, `gemini`, `grok`, or `ollama` (local, no key). Each cloud provider keeps its own stored key. |
-| `recap.model` | `claude-sonnet-4-6` | Model for the active provider (e.g. `claude-sonnet-4-6`, `gpt-4o`, `gemini-2.5-pro`, `grok-4`). |
-| `recap.baseUrl` | _(unset)_ | Override the base URL for OpenAI-compatible providers (openai/gemini/grok); leave empty for the provider default. |
+| `recap.provider` | `anthropic` | LLM provider: `anthropic`, `openai`, `gemini`, `grok`, or `ollama`. See [Providers](#providers). |
+| `recap.model` | `claude-sonnet-4-6` | Model for the active provider. Change this when you switch providers. |
+| `recap.baseUrl` | _(unset)_ | Override the base URL for OpenAI-compatible providers (`openai`/`gemini`/`grok`/`ollama`). Empty uses the provider default. |
 | `recap.source` | `session` | Raw-material source: `session` (Claude Code logs) or `git`. |
 | `recap.sink` | `local` | Where to record: `local` or `obsidian`. |
 | `recap.outputDir` | `./recaps` | Output directory for local Markdown. |
@@ -60,17 +107,19 @@ Recording paths — Local: `<outputDir>/YYYY/MM/DD-recap.md`, Obsidian: `<vault>
 
 ## How it works
 
-DailyRecap makes a two-stage LLM call: (1) it extracts decisions, quotes, and numbers from the tagged source material, then (2) generates the topic-segmented recap from that. With Anthropic, stage 1 uses the Citations API for stronger grounding; OpenAI-compatible providers (OpenAI/Gemini/Grok) use an inline text-extraction path instead. The two stages are separate because Citations and Structured Outputs can't be combined in one call.
+DailyRecap makes a two-stage LLM call: (1) it extracts decisions, quotes, and numbers from the tagged source material, then (2) generates the topic-segmented recap from that. With Anthropic, stage 1 uses the Citations API for stronger grounding; the other providers use an inline text-extraction path instead. The two stages are separate because Citations and Structured Outputs can't be combined in one call.
+
+Source material is tagged by origin — your prompts, the assistant's replies, tool calls/results, and (when enriched) git commits and changed files — and trimmed to fit a token budget, prioritizing your prompts and the assistant's reasoning over raw tool output.
 
 ## Privacy & Security
 
-Your API key is stored only in the editor's secret storage (e.g. macOS Keychain) — never in `settings.json`, logs, or any server. Before raw material is sent to the model, keys, tokens, and emails are masked. The preview webview runs with a strict CSP and no scripts.
+Your API key is stored only in the editor's secret storage (e.g. macOS Keychain) — never in `settings.json`, logs, or any server. Before raw material is sent to the model, keys, tokens, and emails are masked. Cloud calls go directly to the provider you configured; with Ollama, nothing leaves your machine. The preview webview runs with a strict CSP and no scripts.
 
 ## Known limitations
 
 - Auto-matching a workspace to its `~/.claude/projects` folder can fail when the folder-name encoding differs across Claude Code versions — pick the project manually from the list when that happens.
 - The "why" reconstructed from git-only days is only as good as your commit messages.
-- Anthropic is the only provider with the native Citations API; OpenAI/Gemini/Grok and local Ollama run through an inline extraction path instead, so their "grounding" is slightly weaker (local models most of all).
+- Anthropic is the only provider with the native Citations API; OpenAI/Gemini/Grok and local Ollama run through an inline extraction path instead, so their grounding is slightly weaker (local models most of all).
 
 ## Contributing
 
