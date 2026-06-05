@@ -35,6 +35,11 @@
         "category": "DailyRecap"
       },
       {
+        "command": "recap.manageApiKeys",
+        "title": "DailyRecap: Manage API Keys",
+        "category": "DailyRecap"
+      },
+      {
         "command": "recap.generate",
         "title": "DailyRecap: Generate Recap",
         "category": "DailyRecap"

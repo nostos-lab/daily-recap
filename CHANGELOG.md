@@ -5,6 +5,7 @@
 ### Added
 - 외부 멀티 프로바이더 지원: OpenAI 호환 어댑터 1개로 **OpenAI·Google Gemini·xAI Grok** 커버(설정 `recap.provider`, 필요 시 `recap.baseUrl`로 엔드포인트 오버라이드). Citations API는 Anthropic 전용이라 외부 모델은 인라인 추출 경로 사용.
 - **Ollama(로컬) 프로바이더**: 같은 OpenAI 호환 어댑터를 재사용(`http://localhost:11434/v1`). API 키 불필요(더미 Bearer 자동 주입), 서버 미기동 시 안내 메시지. 무료·오프라인 옵션.
+- **`DailyRecap: Manage API Keys` 명령**: 프로바이더별 키 저장 여부를 목록으로 보여주고(● 저장됨 / ○ 없음), 각 항목 우측 🗑 버튼으로 삭제(확인 후), 항목 선택 시 설정/교체. SecretStorage엔 목록 API가 없어 고정 프로바이더 슬롯을 조회해 표시.
 - 프로바이더별 키 슬롯: `recap.apiKey.<provider>`로 각 프로바이더 키를 따로 저장. `Set API Key`가 어느 프로바이더 키인지 먼저 묻고 해당 슬롯에 저장(키 자동 감지 없음). 기존 단일 anthropic 키는 첫 사용 시 자동 마이그레이션.
 
 ### Changed

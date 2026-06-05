@@ -17,6 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
   const secrets = new SecretsStore(context.secrets);
   context.subscriptions.push(
     vscode.commands.registerCommand("recap.setApiKey", () => setApiKey(secrets)),
+    vscode.commands.registerCommand("recap.manageApiKeys", () => manageApiKeys(secrets)),
     vscode.commands.registerCommand("recap.generate", () => safeGenerate(secrets))
   );
 }
@@ -27,7 +28,6 @@ export function deactivate() {
 
 /* ── recap.setApiKey ── */
 async function setApiKey(secrets: SecretsStore): Promise<void> {
-  // 1) which provider's key are we setting?
   const active = vscode.workspace.getConfiguration("recap").get<string>("provider") || "anthropic";
   const ordered = Object.values(PROVIDERS)
     .filter((m) => m.needsKey)
@@ -43,9 +43,15 @@ async function setApiKey(secrets: SecretsStore): Promise<void> {
   if (!picked) {
     return;
   }
-  const meta = PROVIDERS[picked.id];
+  await promptAndStoreKey(secrets, picked.id);
+}
 
-  // 2) enter the key
+/** prompt for a key and store it in the given provider's slot. */
+async function promptAndStoreKey(secrets: SecretsStore, providerId: string): Promise<void> {
+  const meta = PROVIDERS[providerId];
+  if (!meta) {
+    return;
+  }
   const value = await vscode.window.showInputBox({
     title: `DailyRecap — ${meta.label} API Key`,
     prompt: "Your API key is stored only in VS Code SecretStorage — never in settings or logs as plain text.",
@@ -62,8 +68,72 @@ async function setApiKey(secrets: SecretsStore): Promise<void> {
     return;
   }
   await secrets.setApiKey(meta.id, trimmed);
+  const active = vscode.workspace.getConfiguration("recap").get<string>("provider") || "anthropic";
   const hint = meta.id === active ? "" : ` (set recap.provider to "${meta.id}" to use it)`;
   vscode.window.showInformationMessage(`DailyRecap: ${meta.label} API key saved.${hint}`);
+}
+
+/* ── recap.manageApiKeys (list stored keys + inline delete) ── */
+interface KeyItem extends vscode.QuickPickItem {
+  id: string;
+  hasKey: boolean;
+}
+
+async function manageApiKeys(secrets: SecretsStore): Promise<void> {
+  const qp = vscode.window.createQuickPick<KeyItem>();
+  qp.title = "DailyRecap — API Keys";
+  qp.placeholder = "Select a provider to set/replace its key · click the trash icon to delete";
+  qp.ignoreFocusOut = true;
+  const deleteBtn: vscode.QuickInputButton = {
+    iconPath: new vscode.ThemeIcon("trash"),
+    tooltip: "Delete this key",
+  };
+  const active = vscode.workspace.getConfiguration("recap").get<string>("provider") || "anthropic";
+
+  const refresh = async (): Promise<void> => {
+    qp.busy = true;
+    const items: KeyItem[] = [];
+    for (const m of Object.values(PROVIDERS).filter((p) => p.needsKey)) {
+      const hasKey = !!(await secrets.getApiKey(m.id));
+      items.push({
+        label: m.label,
+        description: `${hasKey ? "● key stored" : "○ no key"}${m.id === active ? " · current provider" : ""}`,
+        detail: hasKey ? "Enter to replace · trash icon to delete" : "Enter to set a key",
+        buttons: hasKey ? [deleteBtn] : [],
+        id: m.id,
+        hasKey,
+      });
+    }
+    qp.items = items;
+    qp.busy = false;
+  };
+
+  qp.onDidTriggerItemButton(async (e) => {
+    const item = e.item;
+    const confirm = await vscode.window.showWarningMessage(
+      `Delete the ${item.label} API key? This cannot be undone.`,
+      { modal: true },
+      "Delete"
+    );
+    if (confirm === "Delete") {
+      await secrets.deleteApiKey(item.id);
+      vscode.window.showInformationMessage(`DailyRecap: ${item.label} API key deleted.`);
+      await refresh();
+    }
+  });
+
+  qp.onDidAccept(async () => {
+    const item = qp.selectedItems[0];
+    if (!item) {
+      return;
+    }
+    qp.hide();
+    await promptAndStoreKey(secrets, item.id);
+  });
+
+  qp.onDidHide(() => qp.dispose());
+  await refresh();
+  qp.show();
 }
 
 /* ── recap.generate (full flow) ── */

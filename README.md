@@ -38,7 +38,8 @@ No Claude Code logs for that day? DailyRecap offers to build the recap from that
 
 | Command | ID | Description |
 |---|---|---|
-| DailyRecap: Set API Key | `recap.setApiKey` | Store your Anthropic API key in SecretStorage |
+| DailyRecap: Set API Key | `recap.setApiKey` | Pick a provider and store its API key in SecretStorage |
+| DailyRecap: Manage API Keys | `recap.manageApiKeys` | List which providers have a stored key; set/replace, or delete via the trash icon |
 | DailyRecap: Generate Recap | `recap.generate` | Run the full flow: pick project/date → generate → preview → record |
 
 ## Extension Settings
