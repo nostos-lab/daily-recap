@@ -46,21 +46,23 @@ check("RECAP_SKELETON == recap-skeleton.md", mdFile.trim() === RECAP_SKELETON.tr
 console.log("\n[buildRecapPrompt · 4축 구조 강제]");
 const recap = buildRecapPrompt(rm, "{}", "ko");
 const sections = [
-  "오늘 어떤 결정을 내렸나?",
-  "그 결정을 왜 그렇게 내렸나?",
-  "그 결정으로 어떤 결과를 얻었나?",
+  "어떤 결정을 내렸나?",
+  "왜 그렇게 내렸나?",
+  "어떤 결과를 얻었나?",
   "막혔거나 의외였던 점은?",
-  "내일/다음에 이어서 볼 것은?",
+  "다음에 이어서 볼 것은?",
 ];
 for (const s of sections) {
   check(`섹션 지시 포함: ${s}`, recap.user.includes(s));
 }
 check("오늘 한 줄 포함", recap.user.includes("오늘 한 줄"));
+check("주제 블록 포함", recap.user.includes("## 주제:"));
 check("결과 표 포함", recap.user.includes("| 무엇 | 결과 |"));
 check("system: Y-Statement 강제", recap.system.includes("Y-Statement"));
 check("system: anti-hallucination", recap.system.includes("지어내지 않는다"));
 check("system: 암묵적 수용 가드레일", recap.system.includes("암묵적 수용"));
 check("system: 골격 그대로", recap.system.includes("골격"));
+check("system: 주제 세그멘테이션 규칙", recap.system.includes("작업 주제") && recap.system.includes("반복"));
 
 console.log("\n[buildExtractionPrompt · Citations용]");
 const ext = buildExtractionPrompt(rm, "ko");

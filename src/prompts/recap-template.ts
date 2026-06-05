@@ -230,39 +230,41 @@ export const RECAP_SKELETON = `# {YYYY-MM-DD} · {프로젝트명} 의사결정 
 
 > **오늘 한 줄**: {그날 가장 중요한 결정 1개를 25단어 이내로}
 
-## 오늘 어떤 결정을 내렸나?
+<!-- 아래 "## 주제" 블록을 그날의 작업 주제(thread)마다 반복한다.
+주제는 응집된 목표 단위로 묶고, 모호하면 합치며, 없는 주제는 지어내지 않는다. 주제가 하나면 섹션도 하나. -->
 
-{40~75단어 자기완결 단락. 사용자 프롬프트 verbatim 인용 가능하면 출처와 함께.}
+## 주제: {작업 주제명 — 예: 회원가입 / UI 수정 / 백엔드 API}
+
+**무엇을 했나** — {이 주제에서 한 일 1~2줄}
+
+**어떤 결정을 내렸나?**
 
 - {결정 1 — 한 줄}
 - {결정 2 — 한 줄}
 
-## 그 결정을 왜 그렇게 내렸나? (맥락과 판단)
+**왜 그렇게 내렸나? (맥락과 판단)**
 
-{각 주요 결정에 대해 Y-Statement로:
-"~한 맥락에서, ~를 우려해, ~를 택했고, ~를 감수했다."}
+{각 결정을 Y-Statement로: "~한 맥락에서, ~를 우려해, ~를 택했고, ~를 감수했다."}
 
-- **트리거** — {세션/커밋에서 가져온 짧은 verbatim 인용 + 출처}
-- **고려한 대안** — {대안마다 별도 불릿으로: "대안 — 채택/기각 이유 (출처)". 없으면 "기록되지 않음"}
+- **트리거** — {짧은 verbatim 인용 + 출처}
+- **고려한 대안** — {대안마다 별도 불릿: "대안 — 채택/기각 이유 (출처)". 없으면 "기록되지 않음"}
 
-## 그 결정으로 어떤 결과를 얻었나?
-
-{40~75단어. 구체 결과를 우선: 변경 파일 수, 통과한 테스트, 해결한 에러, 소요 시간. 없으면 "이번 세션에서는 측정되지 않음".}
+**어떤 결과를 얻었나?**
 
 | 무엇 | 결과 |
 |---|---|
 | {항목} | {결과/수치} |
 
-## 막혔거나 의외였던 점은?
+**막혔거나 의외였던 점은?**
 
-{40~75단어. 잘못된 가정을 중간에 바로잡은 것, API 함정 등. verbatim 인용 + 출처.}
+{40~75단어. 잘못된 가정을 바로잡은 것·API 함정 등. 없으면 "기록되지 않음".}
 
-## 내일/다음에 이어서 볼 것은?
+**다음에 이어서 볼 것은?**
 
-{40~75단어. 구체적 다음 행동. 불명확하면 열린 질문 1~2개.}
+{구체적 다음 행동. 불명확하면 열린 질문 1~2개.}
 
 ---
-*기록: {YYYY-MM-DD} · 세션 {N}턴 · 커밋 {N}개 · DailyRecap 자동 생성*
+*기록: {YYYY-MM-DD} · 주제 {N}개 · 세션 {N}턴 · 커밋 {N}개 · DailyRecap 자동 생성*
 `;
 
 const RECAP_SYSTEM: Record<Lang, string> = {
@@ -277,7 +279,8 @@ const RECAP_SYSTEM: Record<Lang, string> = {
 7) '오늘 한 줄'은 옵션 기호((a)/(b)/(c))나 내부 약어 없이, 처음 보는 사람도 이해할 평이한 한 문장(25단어 이내)으로 쓴다.
 8) '고려한 대안'은 대안마다 별도 불릿으로 나누고, 각 불릿은 "대안 — 채택/기각 이유 (출처)" 형식으로 쓴다.
 9) 분량 가이드(섹션별 40~75단어)를 지킨다.
-10) '그 결정으로 어떤 결과를 얻었나' 섹션은 git 결과(G 태그: 커밋·변경 파일)가 있으면 그것을 최우선 근거로 삼는다.
+10) '어떤 결과를 얻었나?' 섹션은 git 결과(G 태그: 커밋·변경 파일)가 있으면 그것을 최우선 근거로 삼는다.
+11) **하루의 작업을 응집된 '작업 주제(thread)'로 나누고, 골격의 "## 주제" 블록을 주제마다 반복한다.** 주제는 목표 단위로 묶고, 모호하면 합치며, 원재료에 없는 주제를 지어내지 않는다. 주제가 하나뿐이면 섹션도 하나다. 같은 작업은 한 주제로 모은다.
 출력은 채워진 마크다운 recap 한 편만. 코드펜스로 감싸지 말 것.`,
   en: `You are a retrospective editor who turns a developer's day of coding into a "decision recap".
 Rules:
@@ -290,7 +293,8 @@ Rules:
 7) Write the one-liner in plain language a newcomer understands (under 25 words) — no option letters ((a)/(b)/(c)) or internal jargon.
 8) In "alternatives", use one bullet per alternative: "alternative — chosen/rejected because (source)".
 9) Respect length guidance (40–75 words per section).
-10) For "what result did it produce", prioritize git evidence (G tags: commits, changed files) when present.
+10) In the "result" section, prioritize git evidence (G tags: commits, changed files) when present.
+11) **Segment the day into coherent work threads and repeat the "## 주제" (topic) block per thread.** Group by goal, merge when ambiguous, never invent a thread absent from the sources; one section if there is only one topic.
 Output only the filled markdown recap. Do not wrap it in a code fence.`,
 };
 
