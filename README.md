@@ -70,20 +70,9 @@ Your API key is stored only in the editor's secret storage (e.g. macOS Keychain)
 - The "why" reconstructed from git-only days is only as good as your commit messages.
 - Provider support is Anthropic-only in v1 (OpenAI/Ollama are planned).
 
-## Roadmap
-
-See [ROADMAP.md](./ROADMAP.md). Next up: a grounding verifier and a local (Ollama) provider.
-
 ## Contributing
 
-```bash
-npm install
-npm run compile   # type-check + build
-npm test          # run the test suites
-npm run package   # build the .vsix
-```
-
-Issues and PRs welcome.
+Contributions welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Release Notes
 
