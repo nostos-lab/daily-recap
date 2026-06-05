@@ -4,64 +4,91 @@
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/nostos-lab.dailyrecap)](https://marketplace.visualstudio.com/items?itemName=nostos-lab.dailyrecap)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
-**오늘 무슨 결정을 왜 내렸고, 그래서 무엇을 얻었는지** — AI 코딩 세션이 끝나면 명령 하나로 "의사결정 회고(recap)"를 자동으로 만들어 줍니다.
+Turn a day of AI-assisted coding into a **decision retrospective** — what you decided, *why*, and what it produced — with one command.
 
-회고는 누구나 하고 싶어 하지만 *쓰는 마찰* 때문에 거의 못 합니다. DailyRecap은 그 마찰을 거의 0으로 만들어, 하루의 결정과 맥락이 **노력 없이 매일 쌓이게** 합니다. 발행이 아니라 **나를 위한 기록**입니다.
+Retrospectives are valuable but rarely happen, because writing them is friction. DailyRecap reads your **AI coding session logs** (and git history) and drafts the recap for you, so the day's decisions and context accumulate **with almost no effort**. It's a private journal for *you*, not a publishing tool.
 
-## 무엇을 해주나요
+<!-- TODO: add a demo GIF/screenshot here, e.g. ![Demo](images/demo.gif) -->
 
-- **결정 중심 회고**: 오늘 한 줄 → 어떤 결정을 내렸나 → 왜 그렇게 판단했나 → 어떤 결과를 얻었나 → 막힌 점 → 다음. 일관된 구조로 정리됩니다.
-- **세션에서 "왜"를 복원**: Claude Code 세션 로그를 읽어 그날의 프롬프트·판단·작업 흐름에서 결정의 맥락을 되살립니다.
-- **지어내지 않습니다**: 기록에 없는 사실·수치는 쓰지 않고, 인용에는 출처를 답니다. 당신이 명시적으로 선택한 것만 "결정"으로 적습니다.
-- **바로 적립**: 결과물을 띄우고 끝나는 게 아니라, **로컬 마크다운**이나 **Obsidian vault**에 날짜별로 기록합니다.
-- **내 키, 내 데이터(BYOK)**: API 키는 OS 보안 저장소에만 저장되고, 호출은 당신의 키로 직접 이뤄집니다. 우리 서버를 거치지 않습니다.
+## Features
 
-## 설치
+- **Decision-first recaps.** Each day is organized into work threads (e.g. *Sign-up*, *UI fixes*, *Backend API*), and every thread gets a structured section: what was decided → why (context & judgment) → result → what got stuck → what's next.
+- **Recovers the "why" from your session.** It reads Claude Code session logs (your prompts, the assistant's replies, the tool calls) to reconstruct the reasoning behind each change — not just the diff.
+- **Fuses in git results.** The same day's commits and changed files are pulled in as ground-truth evidence for the "result" of each decision.
+- **Grounded, not hallucinated.** Facts and numbers must trace to a source; only choices you explicitly made are stated as decisions; quotes carry citations.
+- **Writes where you already work.** Appends to local Markdown or an Obsidian vault, organized by date.
+- **Bring your own key (BYOK).** Your API key lives only in the editor's secret storage; calls go directly to Anthropic — never through our servers.
 
-**VS Code**: 확장 패널(`Cmd/Ctrl+Shift+X`)에서 **"DailyRecap"** 검색 → Install. 또는 [마켓플레이스 페이지](https://marketplace.visualstudio.com/items?itemName=nostos-lab.dailyrecap)에서 설치.
+## Requirements
 
-**Cursor / 기타**: `.vsix`를 받아 확장 패널 `…` → *Install from VSIX*로 설치하면 됩니다.
+- VS Code 1.85+ (or Cursor / other VS Code-compatible editors)
+- An [Anthropic API key](https://console.anthropic.com/account/keys) with usage credit (billed separately from any subscription)
+- Node.js 18+ is only needed if you build the extension from source
 
-준비물: 사용량 크레딧이 있는 [Anthropic API 키](https://console.anthropic.com/account/keys) (구독과 별개로 청구됩니다).
+## Getting Started
 
-## 사용법
+1. Open the Command Palette (`Cmd/Ctrl+Shift+P`) → **DailyRecap: Set API Key** and paste your Anthropic key (stored in SecretStorage).
+2. Run **DailyRecap: Generate Recap**.
+3. Pick a project → a date (dates that actually have logs are listed first) → confirm.
+4. Review the preview, then choose where to save it (Local Markdown or Obsidian).
 
-1. 명령 팔레트(`Cmd/Ctrl+Shift+P`) → **DailyRecap: API 키 설정** 으로 키를 한 번 저장합니다.
-2. **DailyRecap: recap 생성** 실행.
-3. 프로젝트 → 날짜(로그가 있는 날짜가 우선 표시됨) 선택 → 미리보기 확인 → 기록 위치(로컬 / Obsidian) 선택.
+No Claude Code logs for that day? DailyRecap offers to build the recap from that day's **git commits** instead.
 
-세션 로그가 없는 날에는 그날의 **git 커밋**으로 대신 만들 수 있습니다.
+## Commands
 
-## 설정
-
-| 설정 | 기본값 | 설명 |
+| Command | ID | Description |
 |---|---|---|
-| `recap.model` | `claude-sonnet-4-6` | 사용할 Anthropic 모델 |
-| `recap.source` | `session` | 원재료 소스 (`session` 또는 `git`) |
-| `recap.sink` | `local` | 기록 위치 (`local` / `obsidian`) |
-| `recap.outputDir` | `./recaps` | 로컬 기록 폴더 |
-| `recap.obsidianVault` | (없음) | Obsidian vault 절대 경로 |
-| `recap.lang` | `auto` | 출력 언어 (`auto`는 에디터 언어를 따름) |
+| DailyRecap: Set API Key | `recap.setApiKey` | Store your Anthropic API key in SecretStorage |
+| DailyRecap: Generate Recap | `recap.generate` | Run the full flow: pick project/date → generate → preview → record |
 
-기록 경로 — 로컬: `<outputDir>/YYYY/MM/DD-recap.md`, Obsidian: `<vault>/_Recap/YYYY/MM/DD.md`. 같은 날 다시 만들면 이어 붙이고, 동일 내용은 건너뜁니다.
+## Extension Settings
 
-## 프라이버시
+| Setting | Default | Description |
+|---|---|---|
+| `recap.provider` | `anthropic` | LLM provider (v1 is fixed to `anthropic`). |
+| `recap.model` | `claude-sonnet-4-6` | Anthropic model to use. |
+| `recap.source` | `session` | Raw-material source: `session` (Claude Code logs) or `git`. |
+| `recap.sink` | `local` | Where to record: `local` or `obsidian`. |
+| `recap.outputDir` | `./recaps` | Output directory for local Markdown. |
+| `recap.obsidianVault` | _(unset)_ | Absolute path to your Obsidian vault. |
+| `recap.lang` | `auto` | Recap output language (`auto`/`ko`/`en`); `auto` follows the editor locale. |
+| `recap.gitEnrich` | `always` | Enrich the "result" axis with the same day's git commits: `always` / `auto` (only when the session's own result signal is weak) / `off`. |
 
-API 키는 에디터의 보안 저장소(SecretStorage, macOS는 키체인)에만 저장되며 설정 파일·로그·외부 서버 어디에도 평문으로 남지 않습니다. 원재료를 모델에 보내기 전 키·토큰·이메일은 자동으로 가려집니다.
+Recording paths — Local: `<outputDir>/YYYY/MM/DD-recap.md`, Obsidian: `<vault>/_Recap/YYYY/MM/DD.md`. Re-running the same day appends with a separator; identical content is skipped.
 
-## 라이선스
+## How it works
 
-[MIT](./LICENSE)
+DailyRecap makes a two-stage LLM call: (1) it uses the Citations API to extract decisions, quotes, and numbers from the tagged source material, then (2) generates the topic-segmented recap from that. The two stages are separate because Citations and Structured Outputs can't be combined in one call.
 
----
+## Privacy & Security
 
-### 개발 (기여자용)
+Your API key is stored only in the editor's secret storage (e.g. macOS Keychain) — never in `settings.json`, logs, or any server. Before raw material is sent to the model, keys, tokens, and emails are masked. The preview webview runs with a strict CSP and no scripts.
+
+## Known limitations
+
+- Auto-matching a workspace to its `~/.claude/projects` folder can fail when the folder-name encoding differs across Claude Code versions — pick the project manually from the list when that happens.
+- The "why" reconstructed from git-only days is only as good as your commit messages.
+- Provider support is Anthropic-only in v1 (OpenAI/Ollama are planned).
+
+## Roadmap
+
+See [ROADMAP.md](./ROADMAP.md). Next up: a grounding verifier and a local (Ollama) provider.
+
+## Contributing
 
 ```bash
 npm install
-npm run compile      # 타입 검사 + 빌드
-npm test             # 테스트
-npm run package      # .vsix 빌드
+npm run compile   # type-check + build
+npm test          # run the test suites
+npm run package   # build the .vsix
 ```
 
-진행 중인 방향은 [ROADMAP.md](./ROADMAP.md) 참고. 이슈·PR 환영합니다.
+Issues and PRs welcome.
+
+## Release Notes
+
+See [CHANGELOG.md](./CHANGELOG.md).
+
+## License
+
+[MIT](./LICENSE)
