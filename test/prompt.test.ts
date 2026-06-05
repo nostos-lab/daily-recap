@@ -64,6 +64,13 @@ check("system: 암묵적 수용 가드레일", recap.system.includes("암묵적 
 check("system: 골격 그대로", recap.system.includes("골격"));
 check("system: 주제 세그멘테이션 규칙", recap.system.includes("작업 주제") && recap.system.includes("반복"));
 
+console.log("\n[buildRecapPrompt · 영어 골격]");
+const recapEn = buildRecapPrompt(rm, "{}", "en");
+check("en: 영어 주제 헤더", recapEn.user.includes("## Topic:"));
+check("en: 영어 섹션 헤더", recapEn.user.includes("What decisions were made?") && recapEn.user.includes("What result did it produce?"));
+check("en: 한국어 헤더 미포함", !recapEn.user.includes("## 주제:") && !recapEn.user.includes("어떤 결정을 내렸나?"));
+check("en: system 영어 세그멘테이션 규칙", recapEn.system.includes("Segment the day"));
+
 console.log("\n[buildExtractionPrompt · Citations용]");
 const ext = buildExtractionPrompt(rm, "ko");
 check("system: 지어내기 금지", ext.system.includes("지어내지 않는다"));
