@@ -1,0 +1,130 @@
+{
+  "name": "dailyrecap",
+  "displayName": "DailyRecap",
+  "description": "Auto-generate today's decision recap from your AI coding session logs and record it to Obsidian / local Markdown. BYOK.",
+  "version": "0.1.0",
+  "publisher": "nostos-lab",
+  "author": "nostos-lab",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nostos-lab/daily-recap.git"
+  },
+  "keywords": [
+    "recap",
+    "retrospective",
+    "decision",
+    "journal",
+    "claude-code",
+    "obsidian"
+  ],
+  "icon": "images/icon-dark.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "recap.setApiKey",
+        "title": "DailyRecap: Set API Key",
+        "category": "DailyRecap"
+      },
+      {
+        "command": "recap.manageApiKeys",
+        "title": "DailyRecap: Manage API Keys",
+        "category": "DailyRecap"
+      },
+      {
+        "command": "recap.generate",
+        "title": "DailyRecap: Generate Recap",
+        "category": "DailyRecap"
+      }
+    ],
+    "configuration": {
+      "title": "DailyRecap",
+      "properties": {
+        "recap.provider": {
+          "type": "string",
+          "enum": ["anthropic", "openai", "gemini", "grok", "ollama"],
+          "default": "anthropic",
+          "enumDescriptions": [
+            "Anthropic (Claude) — native Citations API for grounded extraction",
+            "OpenAI (GPT) — OpenAI-compatible endpoint",
+            "Google Gemini — OpenAI-compatible endpoint",
+            "xAI (Grok) — OpenAI-compatible endpoint",
+            "Ollama (local) — OpenAI-compatible endpoint, no API key, runs on your machine"
+          ],
+          "description": "LLM provider. Set its API key via 'DailyRecap: Set API Key' (Ollama needs none). Non-Anthropic providers use inline extraction (no Citations API)."
+        },
+        "recap.model": {
+          "type": "string",
+          "default": "claude-sonnet-4-6",
+          "description": "Model to use for the active provider (e.g. claude-sonnet-4-6, gpt-4o, gemini-2.5-pro, grok-4, or a local Ollama tag like llama3.1). Check each provider's docs for current model names."
+        },
+        "recap.baseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Override the API base URL for OpenAI-compatible providers (openai/gemini/grok/ollama). Leave empty to use the provider default (Ollama: http://localhost:11434/v1)."
+        },
+        "recap.source": {
+          "type": "string",
+          "enum": ["session", "git"],
+          "default": "session",
+          "description": "Raw-material source. 'session' (Claude Code session logs) preferred, with 'git' fallback."
+        },
+        "recap.sink": {
+          "type": "string",
+          "enum": ["local", "obsidian"],
+          "default": "local",
+          "description": "Where to record the recap."
+        },
+        "recap.outputDir": {
+          "type": "string",
+          "default": "./recaps",
+          "description": "Output directory for local Markdown recaps."
+        },
+        "recap.obsidianVault": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to the Obsidian vault."
+        },
+        "recap.lang": {
+          "type": "string",
+          "enum": ["auto", "ko", "en"],
+          "default": "auto",
+          "description": "Recap output language. 'auto' follows the editor locale."
+        },
+        "recap.gitEnrich": {
+          "type": "string",
+          "enum": ["always", "auto", "off"],
+          "default": "always",
+          "enumDescriptions": [
+            "Always enrich when commits exist",
+            "Enrich only when the session's own result signal (changed files / tool results) is weak",
+            "Do not enrich"
+          ],
+          "description": "How to enrich the recap's \"result\" axis with the same day's git commits and changed files."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "for f in parser prompt llm sink e2e git fusion; do node --experimental-strip-types --import ./test/register-ts.mjs test/$f.test.ts || exit 1; done",
+    "package": "vsce package",
+    "release": "bash ./scripts/release.sh"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.4.0",
+    "@vscode/vsce": "^2.24.0",
+    "ovsx": "^0.9.0"
+  }
+}

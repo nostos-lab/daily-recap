@@ -1,0 +1,28 @@
+# DailyRecap 로드맵
+
+v1은 "마찰 거의 0으로 매일 의사결정 회고가 쌓이게 한다"는 핵심에 집중했다. 아래는 그다음에 가치가 큰 순서대로 정리한 항목이다.
+
+## v1.1 (우선순위)
+
+### ① 세션 + git 융합으로 "결과" 축 보강 — ✅ 구현됨(main)
+**문제**: 세션 로그는 "왜/어떻게 결정했나"(과정)를 잘 담지만, "그래서 무엇이 실제로 바뀌었나"(결과)는 git 커밋에 있다. 현재는 소스가 `session` *또는* `git`이라 둘을 동시에 쓰지 못해, 빌딩하는 날의 recap "결과" 섹션이 빈약해진다.
+
+**해법**: 세션 소스로 생성할 때, 같은 날짜·같은 repo의 git 결과(커밋·변경 파일·diffstat·통과 테스트)를 보강 소스 블록(예: `G1`)으로 합쳐 "그 결정으로 어떤 결과를 얻었나?" 축을 채운다. 두 리더(`sessionReader`, `gitReader`)가 이미 있어 비용은 작다. footer의 `커밋 N개`도 이때 정확히 채워진다.
+
+**근거**: commit-story 등 동종 도구가 git 커밋을 보는 이유가 곧 "실제 반영된 변화 = 결과"이기 때문. 세션(과정)과 git(결과)은 상보 관계다.
+
+### ✅ 외부 멀티 프로바이더 (OpenAI / Gemini / Grok) — 구현됨
+OpenAI 호환 어댑터 1개(`OpenAICompatProvider`, baseURL·모델만 다름)로 OpenAI·Google Gemini·xAI Grok을 모두 커버. Grok은 `https://api.x.ai/v1`, Gemini는 `https://generativelanguage.googleapis.com/v1beta/openai`의 OpenAI 호환 레이어 사용. Citations는 Anthropic 전용이라 외부 모델은 인라인 추출 경로(`useCitations:false`)로 라우팅. 키는 프로바이더별 슬롯(`recap.apiKey.<provider>`)에 저장하고, `recap.provider`로 명시 선택(자동 감지 없음).
+
+### ② 사후 grounding 검증기 (provider 무관)
+생성된 recap의 모든 수치·verbatim 인용을 원재료와 자동 대조해, 출처에 없는 항목을 플래그/제거한다. 모델에 의존하지 않으므로 Anthropic·Ollama 어디서나 신뢰를 끌어올린다. 사실·인용 레이어를 사실상 하드 보장 수준으로 만든다.
+
+### ✅ Ollama(로컬) 프로바이더 — 구현됨
+무료·로컬·오프라인 옵션. `OpenAICompatProvider`를 `http://localhost:11434/v1`로 재사용(키 불필요, 더미 Bearer 자동 주입). 서버 미기동 시 `ollama serve`·모델 pull 안내 메시지 포함.
+- 남은 트레이드오프: Citations 미지원 + 로컬 모델은 anti‑hallucination·Y‑Statement 준수가 약함 → ②의 grounding 검증기가 안전망으로 함께 필요.
+- 트레이드오프: Citations 미지원으로 출처 근거 약화, 로컬 모델은 anti‑hallucination·Y‑Statement 준수가 약함. → ②의 검증기가 안전망으로 함께 필요.
+
+## 범위 밖(현행 유지)
+외부 발행(dev.to/블로그/SNS), 유료·플랫폼화, Notion 읽기 연동, 백엔드/서버, 다중 모델 오케스트레이션, 팀/협업, Cursor 등 타 에이전트 로그(폴백은 git까지). — PRD §7 동결.
+
+_업데이트: 2026-06-05_
