@@ -38,9 +38,11 @@ if ! printf '%s' "$NEW" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+([-][0-9A-Za-z.-]+)?$
   red "Invalid version: '${NEW}' (expected semver like 1.2.3)"
   exit 1
 fi
+SKIP_BUMP=0
 if [ "$NEW" = "$CURRENT" ]; then
-  red "New version equals the current one (${CURRENT}). Nothing to do."
-  exit 1
+  cyan "v${NEW} already matches package.json — will publish as-is without bumping."
+  cyan "(works only if v${NEW} hasn't been published yet; the marketplace rejects duplicate versions.)"
+  SKIP_BUMP=1
 fi
 
 # soft auth check (vsce may also use a stored login)
@@ -62,7 +64,8 @@ npm test
 green "Build & tests passed."
 
 # ── 3. bump version in package.json (+ package-lock.json) ───
-node - "$NEW" <<'NODE'
+if [ "$SKIP_BUMP" = 0 ]; then
+  node - "$NEW" <<'NODE'
 const fs = require('fs');
 const v = process.argv[2];
 for (const f of ['package.json', 'package-lock.json']) {
@@ -74,7 +77,10 @@ for (const f of ['package.json', 'package-lock.json']) {
   console.log(`updated ${f} -> ${v}`);
 }
 NODE
-green "Version set to v${NEW}."
+  green "Version set to v${NEW}."
+else
+  cyan "Skipping bump — version stays at v${NEW}."
+fi
 
 # ── 4. package once, publish to both registries ────────────
 VSIX="dailyrecap-${NEW}.vsix"
