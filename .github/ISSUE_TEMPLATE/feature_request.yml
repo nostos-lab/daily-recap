@@ -1,0 +1,55 @@
+name: Feature request
+description: Propose a new capability or an enhancement to an existing one.
+title: "feat: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea! Please describe the **problem** first, then the proposal. That makes it easier to evaluate alternatives.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user-facing pain or workflow gap motivates this request?
+      placeholder: e.g. "When I work across multiple repos in a day, the recap conflates them and the result axis is unreadable."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What should DailyRecap do? Be specific about UX, configuration, defaults.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other approaches you thought about and why they fall short.
+
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Area
+      description: Best guess — maintainers will re-label if needed.
+      options:
+        - command / UX
+        - provider / LLM
+        - source (session logs / git)
+        - sink (local / Obsidian)
+        - i18n
+        - configuration
+        - docs
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Mockups, links to similar features elsewhere, or anything else helpful.
