@@ -114,6 +114,7 @@
     }
   },
   "scripts": {
+    "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "test": "for f in parser prompt llm sink e2e git fusion; do node --experimental-strip-types --import ./test/register-ts.mjs test/$f.test.ts || exit 1; done",
