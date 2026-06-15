@@ -1,0 +1,20 @@
+# Code owners for daily-recap.
+#
+# Every PR that touches a file matching a pattern below requires an approving
+# review from one of the listed owners before it can merge (enforced by branch
+# protection on `main`).
+#
+# Patterns follow the same syntax as .gitignore. The last matching pattern
+# wins, so put more specific overrides at the bottom of the file.
+
+# Default owner for everything in the repo.
+* @nostos-lab
+
+# Repo plumbing: CI, GitHub config, release scripts — same owner, kept explicit
+# so future co-maintainers can be added per area without changing the default.
+/.github/         @nostos-lab
+/scripts/         @nostos-lab
+/CONTRIBUTING.md  @nostos-lab
+/CODE_OF_CONDUCT.md @nostos-lab
+/SECURITY.md      @nostos-lab
+/LICENSE          @nostos-lab

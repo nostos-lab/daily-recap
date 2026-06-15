@@ -1,0 +1,105 @@
+name: Bug report
+description: Something in DailyRecap is broken or behaving unexpectedly.
+title: "bug: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug. Please fill in as much as you can — incomplete reports often cannot be reproduced and end up closed without a fix.
+
+        **Security issues?** Do not open a public bug. Follow [SECURITY.md](../SECURITY.md) instead.
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: One-sentence description of the problem.
+      placeholder: e.g. "Generate Recap fails silently when the Anthropic API key is empty."
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps so a maintainer can hit the same failure.
+      placeholder: |
+        1. Open a project with no Claude Code session logs.
+        2. Run `DailyRecap: Generate Recap`.
+        3. Observe...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include any error messages or surfaced notifications, verbatim.
+    validations:
+      required: true
+
+  - type: input
+    id: extension-version
+    attributes:
+      label: DailyRecap version
+      description: From the Extensions panel, or `package.json` version field if built locally.
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: vscode-version
+    attributes:
+      label: VS Code / VSCodium / editor version
+      placeholder: e.g. VS Code 1.93.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: LLM provider in use
+      options:
+        - anthropic
+        - openai
+        - gemini
+        - grok
+        - ollama
+        - n/a
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Linux
+        - Windows
+        - other
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs / output channel
+      description: |
+        Output panel → "DailyRecap" (or the developer console for renderer issues).
+        Please **redact API keys and personal content** before pasting.
+      render: shell
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Anything else that might help — config snippet, screenshots, etc.
